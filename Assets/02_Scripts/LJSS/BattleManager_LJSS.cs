@@ -30,6 +30,9 @@ public class BattleManager : MonoBehaviour
     public GameObject attackHighlightPrefab;
     private List<Vector3Int> validAttackCells = new List<Vector3Int>();
 
+    [Header("Skill Highlights")]
+    private List<Vector3Int> validSkillCells = new List<Vector3Int>();
+
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -99,11 +102,54 @@ public class BattleManager : MonoBehaviour
                 }
                 break;
             case BattleState.SelectingSKill:
-                if (clickedUnit != null)
+                if (validSkillCells.Contains(cellPos))
                 {
-                    Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}에게 스킬 사용");
-                    activeUnit.UseSkill();
+                    Vector3Int startCell = gridTilemap.WorldToCell(activeUnit.transform.position);
+
+                    Vector3Int dir = new Vector3Int(
+                        Mathf.Clamp((cellPos.x - startCell.x), -1, 1),
+                        Mathf.Clamp((cellPos.y - startCell.y), -1, 1),
+                        0
+                    );
+                    int dist = (int)Mathf.Max(Mathf.Abs(cellPos.x - startCell.x), Mathf.Abs(cellPos.y - startCell.y));
+
+                    for(int i = 1; i <= dist; i++)
+                    {
+                        Vector3Int pathCell = new Vector3Int(
+                            (int)(startCell.x + (dir.x * i)),
+                            (int)(startCell.y + (dir.y * i)),
+                            0
+                        );
+                        Vector3 pathWorldPos = gridTilemap.GetCellCenterWorld(pathCell);
+
+                        Collider2D hitTarget = Physics2D.OverlapPoint(pathWorldPos);
+                        if (hitTarget != null)
+                        {
+                            Unit targetUnit = hitTarget.GetComponent<Unit>();
+                            if (targetUnit != null && targetUnit.team != activeUnit.team)
+                            {
+                                Debug.Log($"[돌진 공격] {targetUnit.unitClass}에게 20 데미지");
+                                targetUnit.TakeDamage(20);
+                            }
+
+                            Core targetCore = hitTarget.GetComponent<Core>();
+                            if (targetCore != null && targetCore.team != activeUnit.team)
+                            {
+                                targetCore.TakeDamage(20);
+                            }                        
+                        }
+                    }
+                    ClearHighlights();
                     currentState = BattleState.Idle;
+
+                    Vector3 targetWorldPos = gridTilemap.GetCellCenterWorld(cellPos);
+                    targetWorldPos.z = 0;
+
+                    StartCoroutine(activeUnit.MoveSmoothly(targetWorldPos, ()=> {Debug.Log("돌진 스킬 완료");}));
+                }
+                else
+                {
+                    Debug.Log("스킬을 사용할 수 없는 위치입니다.");
                 }
                 break;
         }
@@ -157,6 +203,38 @@ public class BattleManager : MonoBehaviour
         if (activeUnit == null) return;
         Debug.Log("스킬을 사용할 대상을 클릭하세요");
         currentState = BattleState.SelectingSKill;
+        ShowWarriorSkillTiles(activeUnit);
+    }
+
+    void ShowWarriorSkillTiles(Unit unit)
+    {
+        ClearHighlights();
+
+        Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
+
+        Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right};
+
+        foreach (Vector3Int dir in directions)
+        {
+            for (int i = 1; i <= 4; i++)
+            {
+                Vector3Int nextCell = startCell + dir * i;
+                Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(nextCell);
+
+                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
+                if (hit != null)
+                {
+                    Obstacle obstacle = hit.GetComponent<Obstacle>();
+                    if (obstacle != null && !obstacle.IsPassable())
+                    {
+                        break;
+                    }
+                }
+
+                validSkillCells.Add(nextCell);
+                SpawnHighlight(nextCell);
+            }
+        }
     }
 
     void ShowMovableTiles(Unit unit)
@@ -233,5 +311,6 @@ public class BattleManager : MonoBehaviour
         activeHighlights.Clear();
         validMoveCells.Clear();
         validAttackCells.Clear();
+        validSkillCells.Clear();
     }
 }
