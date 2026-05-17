@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class BattleManager : MonoBehaviour
 {
-   public enum BattleState
+    public enum BattleState
     {
         Idle,
         SelectingMove,
@@ -26,6 +26,10 @@ public class BattleManager : MonoBehaviour
     private List<GameObject> activeHighlights = new List<GameObject>();
     private List<Vector3Int> validMoveCells = new List<Vector3Int>();
 
+    [Header("Combat Highlights")]
+    public GameObject attackHighlightPrefab;
+    private List<Vector3Int> validAttackCells = new List<Vector3Int>();
+
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -39,6 +43,8 @@ public class BattleManager : MonoBehaviour
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
         Unit clickedUnit = hit.collider != null ? hit.collider.GetComponent<Unit>() : null;
+        Core clickedCore = hit.collider != null ? hit.collider.GetComponent<Core>() : null;
+
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
         switch (currentState)
@@ -68,10 +74,28 @@ public class BattleManager : MonoBehaviour
                 }
                 break;
             case BattleState.SelectingAttack:
-                if (clickedUnit != null && clickedUnit != activeUnit)
+                if (validAttackCells.Contains(cellPos))
                 {
-                    Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
-                    currentState = BattleState.Idle;
+                    if (clickedUnit != null && clickedUnit.team != activeUnit.team)
+                    {
+                        Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
+                        clickedUnit.TakeDamage(activeUnit.atk);
+
+                        ClearHighlights();
+                        currentState = BattleState.Idle;
+                    }
+                    else if (clickedCore != null && clickedCore.team != activeUnit.team)
+                    {
+                        Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
+                        clickedCore.TakeDamage(activeUnit.atk);
+
+                        ClearHighlights();
+                        currentState = BattleState.Idle;
+                    }
+                }
+                else
+                {
+                    Debug.Log("공격 범위 밖입니다.");
                 }
                 break;
             case BattleState.SelectingSKill:
@@ -99,6 +123,33 @@ public class BattleManager : MonoBehaviour
         if (activeUnit == null) return;
         Debug.Log("공격할 대상을 클릭하세요");
         currentState = BattleState.SelectingAttack;
+        ShowAttackableTiles(activeUnit);
+    }
+
+    void ShowAttackableTiles(Unit unit)
+    {
+        ClearHighlights();
+        validAttackCells.Clear();
+
+        Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
+        int range = unit.attackRange;
+
+        for (int x = -range; x <= range; x++)
+        {
+            for (int y = -range; y <= range; y++)
+            {
+                if (Mathf.Abs(x) + Mathf.Abs(y) <= range)
+                {
+                    Vector3Int targetCell = startCell + new Vector3Int(x, y, 0);
+                    validAttackCells.Add(targetCell);
+
+                    Vector3 pos = gridTilemap.GetCellCenterWorld(targetCell);
+                    pos.z = 0;
+                    GameObject highlight = Instantiate(attackHighlightPrefab, pos, Quaternion.identity);
+                    activeHighlights.Add(highlight);
+                }
+            }
+        }
     }
 
     public void OnSkillButtonClicked()
@@ -121,7 +172,7 @@ public class BattleManager : MonoBehaviour
         queue.Enqueue(startCell);
         visited.Add(startCell, 0);
 
-        Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right};
+        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
 
         while (queue.Count > 0)
         {
@@ -133,7 +184,7 @@ public class BattleManager : MonoBehaviour
 
             if (currentDist >= range) continue;
 
-            foreach(Vector3Int dir in directions)
+            foreach (Vector3Int dir in directions)
             {
                 Vector3Int next = current + dir;
 
@@ -159,11 +210,11 @@ public class BattleManager : MonoBehaviour
                     }
                 }
 
-                    if (isPassable)
-                    {
-                        visited.Add(next, currentDist + 1);
-                        queue.Enqueue(next);
-                    }
+                if (isPassable)
+                {
+                    visited.Add(next, currentDist + 1);
+                    queue.Enqueue(next);
+                }
             }
         }
     }
@@ -181,5 +232,6 @@ public class BattleManager : MonoBehaviour
         foreach (var obj in activeHighlights) Destroy(obj);
         activeHighlights.Clear();
         validMoveCells.Clear();
+        validAttackCells.Clear();
     }
 }

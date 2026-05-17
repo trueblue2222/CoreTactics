@@ -23,10 +23,25 @@ public class Unit : MonoBehaviour
     public int skillCooldown = 0;
     public bool isSniperMode = false;
     public int sniperModeTurnsLeft = 0;
-
     void Start()
     {
         currentHp = maxHp;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHp -= damage;
+        Debug.Log($"[{team}] {unitClass} 피격, 남은 체력: {currentHp}");
+        if (currentHp <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log($"[{team}] {unitClass} 사망");
+        gameObject.SetActive(false);
     }
 
     public void UseSkill()
