@@ -137,11 +137,33 @@ public class BattleManager : MonoBehaviour
             {
                 Vector3Int next = current + dir;
 
-                if (!visited.ContainsKey(next))
+                if (visited.ContainsKey(next)) continue;
+
+                Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(next);
+
+                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
+                bool isPassable = true;
+
+                if (hit != null)
                 {
-                    visited.Add(next, currentDist + 1);
-                    queue.Enqueue(next);
+                    Obstacle obstacle = hit.GetComponent<Obstacle>();
+                    if (obstacle != null)
+                    {
+                        isPassable = obstacle.IsPassable();
+                    }
+
+                    Unit unitOnTile = hit.GetComponent<Unit>();
+                    if (unitOnTile != null)
+                    {
+                        isPassable = false;
+                    }
                 }
+
+                    if (isPassable)
+                    {
+                        visited.Add(next, currentDist + 1);
+                        queue.Enqueue(next);
+                    }
             }
         }
     }
