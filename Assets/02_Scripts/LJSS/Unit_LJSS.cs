@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Unit : MonoBehaviour
 {
@@ -24,9 +25,28 @@ public class Unit : MonoBehaviour
     public bool isSniperMode = false;
     public int sniperModeTurnsLeft = 0;
 
+    [Header("Animation Setting")]
+    public float moveSpeed = 2f;
+
     void Start()
     {
         currentHp = maxHp;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHp -= damage;
+        Debug.Log($"[{team}] {unitClass} 피격, 남은 체력: {currentHp}");
+        if (currentHp <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log($"[{team}] {unitClass} 사망");
+        gameObject.SetActive(false);
     }
 
     public void UseSkill()
@@ -92,5 +112,17 @@ public class Unit : MonoBehaviour
                 skillCooldown = 2;
             }
         }
+    }
+
+    public IEnumerator MoveSmoothly(Vector3 targetPos, Action onMoveComplete)
+    {
+        while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        transform.position = targetPos;
+        onMoveComplete?.Invoke();
     }
 }
