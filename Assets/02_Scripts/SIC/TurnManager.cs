@@ -56,10 +56,11 @@ public class TurnManager : MonoBehaviour
     {
         switch (state)
         {
-            case GameState.GameInit:       OnGameInit();                              break;
-            case GameState.PickFirstAttack: StartCoroutine(PickFirstAttackRoutine()); break;
-            case GameState.PlayerTurnStart: OnPlayerTurnStart();                      break;
-            case GameState.EnemyTurnStart:  OnEnemyTurnStart();                       break;
+            case GameState.GameInit:          OnGameInit();                              break;
+            case GameState.PickFirstAttack:   StartCoroutine(PickFirstAttackRoutine()); break;
+            case GameState.PlayerTurnStart:   OnPlayerTurnStart();                      break;
+            case GameState.PlayerTurnEnd:     OnPlayerTurnEnd();                        break;
+            case GameState.EnemyTurnStart:    OnEnemyTurnStart();                       break;
         }
     }
 
@@ -108,7 +109,19 @@ public class TurnManager : MonoBehaviour
         ChangeState(GameState.PlayerUnitSelect);
     }
 
-    // ─── EnemyTurnStart ──────────────────────────────────────
+    // ─── PlayerTurnEnd ───────────────────────────────────────
+    private void OnPlayerTurnEnd()
+    {
+        Debug.Log($"[TurnManager] 플레이어 턴 종료 (턴 {TurnCount}) — TurnEnd 버튼 대기 중");
+        // EnemyTurnStart 전환은 UIManager의 TurnEnd 버튼이 담당
+    }
+
+    public void OnTurnEndButtonClicked()
+    {
+        if (CurrentState != GameState.PlayerTurnEnd) return;
+        ChangeState(GameState.EnemyTurnStart);
+    }
+
     private void OnEnemyTurnStart()
     {
         TurnCount++;

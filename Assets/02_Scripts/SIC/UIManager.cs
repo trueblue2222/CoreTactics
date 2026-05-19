@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -13,6 +14,12 @@ public class UIManager : MonoBehaviour
     // ─── 턴 종료 버튼 ─────────────────────────────────────────
     [Header("턴 종료 버튼")]
     [SerializeField] private Button turnEndButton;
+
+    // ─── 행동 불가 알림 ───────────────────────────────────────
+    [Header("행동 불가 알림")]
+    [SerializeField] private TMP_Text turnEndNoticeText;
+    [SerializeField] private float noticeDisplayTime = 1.5f;
+    private Coroutine _hideNoticeCoroutine;
 
     // ─────────────────────────────────────────────────────────
 
@@ -30,6 +37,7 @@ public class UIManager : MonoBehaviour
     void Start()
     {
         firstAttackText?.gameObject.SetActive(false);
+        turnEndNoticeText?.gameObject.SetActive(false);
         SetTurnEndButton(false);
 
         TurnManager.Instance.OnFirstAttackDecided += ShowFirstAttackResult;
@@ -50,20 +58,44 @@ public class UIManager : MonoBehaviour
             firstAttackText.text = isPlayerFirst ? "Player Turn!" : "Enemy Turn!";
 
         firstAttackText?.gameObject.SetActive(true);
-        // 텍스트는 TurnManager가 다음 상태로 전환할 때 OnStateChanged에서 숨김
+    }
+
+    // ─── 행동 불가 알림 표시 ──────────────────────────────────
+    public void ShowTurnEndNotice()
+    {
+        if (turnEndNoticeText == null) return;
+
+        turnEndNoticeText.text = "Cannot act anymore in this turn!";
+        turnEndNoticeText.gameObject.SetActive(true);
+
+        if (_hideNoticeCoroutine != null) StopCoroutine(_hideNoticeCoroutine);
+        _hideNoticeCoroutine = StartCoroutine(HideNoticeAfterDelay());
+    }
+
+    private IEnumerator HideNoticeAfterDelay()
+    {
+        yield return new WaitForSeconds(noticeDisplayTime);
+        turnEndNoticeText?.gameObject.SetActive(false);
+    }
+
+    // ─── TurnEnd 버튼 클릭 ────────────────────────────────────
+    public void OnTurnEndButtonClicked()
+    {
+        TurnManager.Instance.OnTurnEndButtonClicked();
     }
 
     // ─── 상태 변화 처리 ───────────────────────────────────────
     private void OnStateChanged(GameState state)
     {
-        // 선공 패널: PlayerTurnStart / EnemyTurnStart에 진입하면 닫기
         if (state == GameState.PlayerTurnStart || state == GameState.EnemyTurnStart)
+        {
             firstAttackText?.gameObject.SetActive(false);
+            turnEndNoticeText?.gameObject.SetActive(false);
+        }
 
-        // 턴 종료 버튼: 플레이어가 유닛·행동을 고르는 동안만 활성화
-        // PlayerActionExecute(애니메이션 중)는 제외해 중복 클릭 방지
         bool playerCanAct = state == GameState.PlayerUnitSelect
-                         || state == GameState.PlayerActionSelect;
+                         || state == GameState.PlayerActionSelect
+                         || state == GameState.PlayerTurnEnd;
         SetTurnEndButton(playerCanAct);
     }
 

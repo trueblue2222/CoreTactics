@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.EventSystems;
 
 public class BattleManager : MonoBehaviour
 {
@@ -36,10 +37,17 @@ public class BattleManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && !TurnManager.Instance.IsInputBlocked)
+        if (!Input.GetMouseButtonDown(0)) return;
+        if (EventSystem.current.IsPointerOverGameObject()) return;
+
+        if (TurnManager.Instance.CurrentState == GameState.PlayerTurnEnd)
         {
-            HandleMouseClick();
+            UIManager.Instance.ShowTurnEndNotice();
+            return;
         }
+
+        if (!TurnManager.Instance.IsInputBlocked)
+            HandleMouseClick();
     }
 
     void HandleMouseClick()
@@ -76,14 +84,15 @@ public class BattleManager : MonoBehaviour
             case BattleState.SelectingMove:
                 if (validMoveCells.Contains(cellPos))
                 {
+                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                     Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
                     centerPos.z = 0;
                     activeUnit.transform.position = centerPos;
                     Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
 
                     ClearHighlights();
-
                     currentState = BattleState.Idle;
+                    TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
                 }
                 else
                 {
@@ -95,19 +104,23 @@ public class BattleManager : MonoBehaviour
                 {
                     if (clickedUnit != null && clickedUnit.team != activeUnit.team)
                     {
+                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                         Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
                         clickedUnit.TakeDamage(activeUnit.atk);
 
                         ClearHighlights();
                         currentState = BattleState.Idle;
+                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
                     }
                     else if (clickedCore != null && clickedCore.team != activeUnit.team)
                     {
+                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                         Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
                         clickedCore.TakeDamage(activeUnit.atk);
 
                         ClearHighlights();
                         currentState = BattleState.Idle;
+                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
                     }
                 }
                 else
@@ -118,6 +131,7 @@ public class BattleManager : MonoBehaviour
             case BattleState.SelectingSKill:
                 if (validSkillCells.Contains(cellPos))
                 {
+                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                     Vector3Int startCell = gridTilemap.WorldToCell(activeUnit.transform.position);
 
                     Vector3Int dir = new Vector3Int(
@@ -159,7 +173,11 @@ public class BattleManager : MonoBehaviour
                     Vector3 targetWorldPos = gridTilemap.GetCellCenterWorld(cellPos);
                     targetWorldPos.z = 0;
 
-                    StartCoroutine(activeUnit.MoveSmoothly(targetWorldPos, ()=> {Debug.Log("돌진 스킬 완료");}));
+                    StartCoroutine(activeUnit.MoveSmoothly(targetWorldPos, () =>
+                    {
+                        Debug.Log("돌진 스킬 완료");
+                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                    }));
                 }
                 else
                 {
@@ -174,7 +192,6 @@ public class BattleManager : MonoBehaviour
         if (activeUnit == null) return;
         Debug.Log("이동할 타일을 클릭하세요");
         currentState = BattleState.SelectingMove;
-
         ShowMovableTiles(activeUnit);
     }
 
