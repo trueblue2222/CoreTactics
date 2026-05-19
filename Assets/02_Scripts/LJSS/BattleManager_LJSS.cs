@@ -56,8 +56,11 @@ public class BattleManager : MonoBehaviour
             case BattleState.Idle:
                 if (clickedUnit != null)
                 {
-                    if (TurnManager.Instance.CurrentState == GameState.PlayerUnitSelect
-                        && clickedUnit.team == playerTeamName)
+                    GameState gs = TurnManager.Instance.CurrentState;
+                    bool isSelectPhase = gs == GameState.PlayerUnitSelect
+                                     || gs == GameState.PlayerActionSelect;
+
+                    if (isSelectPhase && clickedUnit.team == playerTeamName)
                     {
                         activeUnit = clickedUnit;
                         Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
