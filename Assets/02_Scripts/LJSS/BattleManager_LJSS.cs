@@ -16,6 +16,7 @@ public class BattleManager : MonoBehaviour
     [Header("System")]
     public Tilemap gridTilemap;
     public BattleState currentState = BattleState.Idle;
+    [SerializeField] private string playerTeamName = "Player";
 
     [Header("Units")]
     public Unit activeUnit;
@@ -35,7 +36,7 @@ public class BattleManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && !TurnManager.Instance.IsInputBlocked)
         {
             HandleMouseClick();
         }
@@ -55,8 +56,18 @@ public class BattleManager : MonoBehaviour
             case BattleState.Idle:
                 if (clickedUnit != null)
                 {
-                    inspectedUnit = clickedUnit;
-                    Debug.Log($"{inspectedUnit.unitClass}의 상태 확인");
+                    if (TurnManager.Instance.CurrentState == GameState.PlayerUnitSelect
+                        && clickedUnit.team == playerTeamName)
+                    {
+                        activeUnit = clickedUnit;
+                        Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
+                        TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
+                    }
+                    else
+                    {
+                        inspectedUnit = clickedUnit;
+                        Debug.Log($"{inspectedUnit.unitClass}의 상태 확인");
+                    }
                 }
                 break;
             case BattleState.SelectingMove:

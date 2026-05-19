@@ -11,6 +11,10 @@ public class TurnManager : MonoBehaviour
     public bool IsPlayerTurn { get; private set; }
     public int TurnCount { get; private set; }
 
+    // ─── 입력 잠금 ───────────────────────────────────────────
+    // PlayerUnitSelect / PlayerActionSelect 외에는 모두 차단
+    public bool IsInputBlocked { get; private set; } = true;
+
     // ─── 이벤트 (UI 등 외부 시스템이 구독) ──────────────────
     public event Action<GameState> OnStateChanged;
     public event Action<bool> OnFirstAttackDecided; // true = 플레이어 선공
@@ -40,7 +44,10 @@ public class TurnManager : MonoBehaviour
     // ─── 외부에서 상태 전환 요청 시 사용 ─────────────────────
     public void ChangeState(GameState newState)
     {
+        Debug.Log($"[TurnManager] {CurrentState} → {newState}");
         CurrentState = newState;
+        IsInputBlocked = newState != GameState.PlayerUnitSelect
+                      && newState != GameState.PlayerActionSelect;
         OnStateChanged?.Invoke(newState);
         HandleState(newState);
     }
@@ -96,6 +103,9 @@ public class TurnManager : MonoBehaviour
         TurnCount++;
         IsPlayerTurn = true;
         Debug.Log($"[TurnManager] 플레이어 턴 시작 (턴 {TurnCount})");
+
+        // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
+        ChangeState(GameState.PlayerUnitSelect);
     }
 
     // ─── EnemyTurnStart ──────────────────────────────────────
