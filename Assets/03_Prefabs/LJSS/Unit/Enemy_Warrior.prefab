@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6111726942819761540}
   - component: {fileID: 1413395475257865022}
   - component: {fileID: 6941666437476276683}
-  - component: {fileID: 6016316428400200952}
+  - component: {fileID: -9052400523648761728}
   m_Layer: 0
   m_Name: Enemy_Warrior
   m_TagString: Untagged
@@ -131,7 +131,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.4294407, y: 1.3565152}
   m_EdgeRadius: 0
---- !u!114 &6016316428400200952
+--- !u!114 &-9052400523648761728
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,7 +140,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3524541419157154429}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 398d29ca54357d848b67ea71f2633d95, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c39f81ef5d6df0478df3aa24b46930f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   unitClass: 0
@@ -154,3 +154,4 @@ MonoBehaviour:
   skillCooldown: 0
   isSniperMode: 0
   sniperModeTurnsLeft: 0
+  moveSpeed: 2

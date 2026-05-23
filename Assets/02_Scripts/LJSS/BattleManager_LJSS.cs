@@ -6,6 +6,13 @@ using UnityEngine.EventSystems;
 
 public class BattleManager : MonoBehaviour
 {
+    public static BattleManager Instance { get; private set;}
+
+    public void Awake()
+    {
+        Instance = this;
+    }
+
     public enum BattleState
     {
         Idle,
@@ -35,7 +42,7 @@ public class BattleManager : MonoBehaviour
     private List<Vector3Int> validAttackCells = new List<Vector3Int>();
 
     [Header("Skill Highlights")]
-    private List<Vector3Int> validSkillCells = new List<Vector3Int>();
+    public List<Vector3Int> validSkillCells = new List<Vector3Int>();
 
     void Start()
     {
@@ -162,97 +169,20 @@ public class BattleManager : MonoBehaviour
             case BattleState.SelectingSkill:
                 if (validSkillCells.Contains(cellPos))
                 {
-                    if (activeUnit.unitClass == Unit.UnitClass.Warrior)
-                    {
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                        Vector3Int startCell = gridTilemap.WorldToCell(activeUnit.transform.position);
-
-                        Vector3Int dir = new Vector3Int(
-                            Mathf.Clamp((cellPos.x - startCell.x), -1, 1),
-                            Mathf.Clamp((cellPos.y - startCell.y), -1, 1),
-                            0
-                        );
-                        int dist = (int)Mathf.Max(Mathf.Abs(cellPos.x - startCell.x), Mathf.Abs(cellPos.y - startCell.y));
-
-                        for (int i = 1; i <= dist; i++)
-                        {
-                            Vector3Int pathCell = new Vector3Int(
-                                (int)(startCell.x + (dir.x * i)),
-                                (int)(startCell.y + (dir.y * i)),
-                                0
-                            );
-                            Vector3 pathWorldPos = gridTilemap.GetCellCenterWorld(pathCell);
-
-                            Collider2D hitTarget = Physics2D.OverlapPoint(pathWorldPos);
-                            if (hitTarget != null)
-                            {
-                                Unit targetUnit = hitTarget.GetComponent<Unit>();
-                                if (targetUnit != null && targetUnit.team != activeUnit.team)
-                                {
-                                    Debug.Log($"[돌진 공격] {targetUnit.unitClass}에게 20 데미지");
-                                    targetUnit.TakeDamage(20);
-                                }
-
-                                Core targetCore = hitTarget.GetComponent<Core>();
-                                if (targetCore != null && targetCore.team != activeUnit.team)
-                                {
-                                    targetCore.TakeDamage(20);
-                                }
-                            }
-                        }
-                        ClearHighlights();
-                        currentState = BattleState.Idle;
-
-                        Vector3 targetWorldPos = gridTilemap.GetCellCenterWorld(cellPos);
-                        targetWorldPos.z = 0;
-
-                        StartCoroutine(activeUnit.MoveSmoothly(targetWorldPos, () =>
-                        {
-                            Debug.Log("돌진 스킬 완료");
-                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                        }));
-                    }
-                    else if (activeUnit.unitClass == Unit.UnitClass.Magician)
-                    {
-                        if (clickedUnit != null)
-                        {
-                            Debug.Log($"대상 유닛 {clickedUnit.unitClass} 선택");
-                            skillTargetUnit = clickedUnit;
-
-                            currentState = BattleState.SelectingSkillDestination;
-                            ShowMagicianSkillDestinationTiles(skillTargetUnit);
-                        }
-                        else
-                        {
-                            Debug.Log("스킬을 적용할 유닛을 선택하세요");
-                        }
-                    }
+                    // 💡 전사든 마법사든 본인의 타겟 클릭 로직을 알아서 실행합니다.
+                    activeUnit.OnSkillTargetClicked(cellPos, clickedUnit, clickedCore);
                 }
                 else
                 {
                     Debug.Log("스킬을 사용할 수 없는 위치입니다.");
                 }
                 break;
+
             case BattleState.SelectingSkillDestination:
                 if (validSkillCells.Contains(cellPos))
                 {
-                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-
-                    Vector3 targetWorldPos = gridTilemap.GetCellCenterWorld(cellPos);
-                    targetWorldPos.z = 0;
-
-                    ClearHighlights();
-                    currentState = BattleState.Idle;
-
-                    activeUnit.UseSkill();
-
-                    StartCoroutine(skillTargetUnit.MoveSmoothly(targetWorldPos, () =>
-                    {
-                        Debug.Log("마법사 스킬 완료");
-                        skillTargetUnit = null;
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                        
-                    }));
+                    // 💡 마법사 본인의 도착지 클릭 로직을 알아서 실행합니다.
+                    activeUnit.OnSkillDestinationClicked(cellPos);
                 }
                 else
                 {
@@ -319,69 +249,13 @@ public class BattleManager : MonoBehaviour
     public void OnSkillButtonClicked()
     {
         if (activeUnit == null) return;
-        // 1. 스킬 쿨타임이 남았는지 먼저 확인합니다.
         if (activeUnit.skillCooldown > 0)
         {
-            Debug.Log($"{activeUnit.unitClass}의 스킬 쿨타임이 {activeUnit.skillCooldown}턴 남았습니다!");
+            Debug.Log($"{activeUnit.unitClass} 쿨타임 대기중 ({activeUnit.skillCooldown}턴 남음)");
             return;
         }
 
-        // 2. 직업에 따라 발동 방식을 나눕니다.
-        if (activeUnit.unitClass == Unit.UnitClass.Warrior)
-        {
-            // 전사: 타일을 선택해야 하므로 상태를 변경하고 빨간 타일을 깔아줍니다.
-            Debug.Log("돌진할 방향의 타일을 클릭하세요.");
-            currentState = BattleState.SelectingSkill;
-            ShowWarriorSkillTiles(activeUnit);
-        }
-        else if (activeUnit.unitClass == Unit.UnitClass.Archer)
-        {
-            // 궁수: 타일 선택 없이 제자리에서 버프가 즉시 발동됩니다!
-            activeUnit.UseSkill(); // Unit.cs에 만들어두신 UseSniperSkill()이 알아서 실행됩니다.
-
-            // 타일을 클릭할 필요가 없으므로 상태는 Idle로 둡니다.
-            currentState = BattleState.Idle;
-
-            // 행동을 소모했으므로 턴을 종료시킵니다.
-            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-        }
-        else if (activeUnit.unitClass == Unit.UnitClass.Magician)
-        {
-            Debug.Log("공간 이동시킬 유닛을 클릭하세요");
-            currentState = BattleState.SelectingSkill;
-            ShowMagicianSkillTargetTiles(activeUnit);
-        }
-    }
-
-    void ShowWarriorSkillTiles(Unit unit)
-    {
-        ClearHighlights();
-
-        Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
-
-        Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
-
-        foreach (Vector3Int dir in directions)
-        {
-            for (int i = 1; i <= 4; i++)
-            {
-                Vector3Int nextCell = startCell + dir * i;
-                Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(nextCell);
-
-                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
-                if (hit != null)
-                {
-                    Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null && !obstacle.IsPassable())
-                    {
-                        break;
-                    }
-                }
-
-                validSkillCells.Add(nextCell);
-                SpawnHighlight(nextCell);
-            }
-        }
+        activeUnit.OnSkillButtonPressed();
     }
 
     void ShowMovableTiles(Unit unit)
@@ -444,7 +318,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    void SpawnHighlight(Vector3Int cellPos)
+    public void SpawnHighlight(Vector3Int cellPos)
     {
         Vector3 pos = gridTilemap.GetCellCenterWorld(cellPos);
         pos.z = 0;
@@ -452,7 +326,7 @@ public class BattleManager : MonoBehaviour
         activeHighlights.Add(highlight);
     }
 
-    void ClearHighlights()
+    public void ClearHighlights()
     {
         foreach (var obj in activeHighlights) Destroy(obj);
         activeHighlights.Clear();
@@ -461,85 +335,4 @@ public class BattleManager : MonoBehaviour
         validSkillCells.Clear();
     }
 
-
-    void ShowArcherSkillTiles(Unit unit)
-    {
-        ClearHighlights();
-
-        if (unit.unitClass == Unit.UnitClass.Archer && unit.isSniperMode)
-        {
-            Debug.Log("저격 모드 실행 중");
-            currentState = BattleState.Idle;
-            return;
-        }
-
-        unit.isSniperMode = true;
-        unit.sniperModeTurnsLeft = 2;
-        Debug.Log($"{unit.unitClass}가 스킬 발동");
-        currentState = BattleState.Idle;
-    }
-
-    void ShowMagicianSkillTargetTiles(Unit unit)
-    {
-        ClearHighlights();
-        validSkillCells.Clear();
-
-        Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
-        int range = 4;
-
-        for (int x = -range; x <= range; x++)
-        {
-            for (int y = -range; y <= range; y++)
-            {
-                if (Mathf.Abs(x) + Mathf.Abs(y) <= range) // 맨해튼 거리 계산
-                {
-                    Vector3Int targetCell = startCell + new Vector3Int(x, y, 0);
-                    validSkillCells.Add(targetCell);
-                    SpawnHighlight(targetCell);
-                }
-            }
-        }
-    }
-
-    void ShowMagicianSkillDestinationTiles(Unit targetUnit)
-    {
-        ClearHighlights();
-        validSkillCells.Clear();
-
-        Vector3Int startCell = gridTilemap.WorldToCell(targetUnit.transform.position);
-        int range = 3;
-
-        for (int x = -range; x <= range; x++)
-        {
-            for (int y = -range; y <= range; y++)
-            {
-                if (Mathf.Abs(x) + Mathf.Abs(y) <= range)
-                {
-                    Vector3Int targetCell = startCell + new Vector3Int(x, y, 0);
-
-                    if (targetCell == startCell) continue;
-
-                    Vector3 worldPos = gridTilemap.GetCellCenterWorld(targetCell);
-                    Collider2D hit = Physics2D.OverlapPoint(worldPos);
-                    bool isPassable = true;
-
-                    if (hit != null)
-                    {
-                        Obstacle obs = hit.GetComponent<Obstacle>();
-                        if (obs != null && !obs.IsPassable())
-                        {
-                            isPassable = false;
-                        }
-                        if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null) isPassable = false;
-                    }
-
-                    if (isPassable)
-                    {
-                        validSkillCells.Add(targetCell);
-                        SpawnHighlight(targetCell);
-                    }
-                }
-            }
-        }
-    }
 }
