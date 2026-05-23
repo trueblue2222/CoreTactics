@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Unity.VisualScripting;
 
 public class Unit : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public class Unit : MonoBehaviour
 
     [Header("Animation Setting")]
     public float moveSpeed = 2f;
+
 
     void Start()
     {
