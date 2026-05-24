@@ -28,6 +28,14 @@ public class Unit : MonoBehaviour
 
     [Header("Animation Setting")]
     public float moveSpeed = 2f;
+    [SerializeField] private float hitFlashDuration = 0.3f;
+
+    private SpriteRenderer spriteRenderer;
+
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
 
     void Start()
@@ -39,10 +47,29 @@ public class Unit : MonoBehaviour
     {
         currentHp -= damage;
         Debug.Log($"[{team}] {unitClass} 피격, 남은 체력: {currentHp}");
+
+        if (BattleManager.Instance.activeUnit == this)
+            UIManager.Instance.UpdateActiveUnitUI(this);
+        else if (BattleManager.Instance.inspectedUnit == this)
+            UIManager.Instance.UpdateInspectedUnitUI(this);
+
+        StartCoroutine(HitFlashRoutine());
+
         if (currentHp <= 0)
         {
             Die();
         }
+    }
+
+    private IEnumerator HitFlashRoutine()
+    {
+        if (spriteRenderer == null) yield break;
+
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(hitFlashDuration);
+
+        if (gameObject.activeInHierarchy)
+            spriteRenderer.color = Color.white;
     }
 
     private void Die()

@@ -85,6 +85,9 @@ public class BattleManager : MonoBehaviour
             activeUnit = null;
             inspectedUnit = null;
             skillTargetUnit = null;
+
+            UIManager.Instance.ClearActiveUnitUI();
+            UIManager.Instance.ClearInspectedUnitUI();
         }
     }
 
@@ -97,27 +100,37 @@ public class BattleManager : MonoBehaviour
 
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
+         if (clickedUnit != null)
+        {
+            // 적군 유닛이면 항상 inspectedUnit으로 등록
+            if (clickedUnit.team != playerTeamName)
+            {
+                inspectedUnit = clickedUnit;
+                UIManager.Instance.UpdateInspectedUnitUI(inspectedUnit);
+                Debug.Log($"[적 유닛 확인] {inspectedUnit.unitClass}");
+            }
+            // 아군 유닛을 Idle + 유닛 선택 가능 페이즈에서 클릭 → activeUnit 변경
+            else if (currentState == BattleState.Idle)
+            {
+                GameState gs = TurnManager.Instance.CurrentState;
+                bool isSelectPhase = gs == GameState.PlayerUnitSelect
+                                  || gs == GameState.PlayerActionSelect;
+ 
+                if (isSelectPhase)
+                {
+                    activeUnit = clickedUnit;
+                    Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
+                    UIManager.Instance.UpdateActiveUnitUI(activeUnit);
+                    UIManager.Instance.ShowActionButtons();
+                    TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
+                    return; // 아래 switch 처리 불필요
+                }
+            }
+        }
+
         switch (currentState)
         {
             case BattleState.Idle:
-                if (clickedUnit != null)
-                {
-                    GameState gs = TurnManager.Instance.CurrentState;
-                    bool isSelectPhase = gs == GameState.PlayerUnitSelect
-                                     || gs == GameState.PlayerActionSelect;
-
-                    if (isSelectPhase && clickedUnit.team == playerTeamName)
-                    {
-                        activeUnit = clickedUnit;
-                        Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
-                    }
-                    else
-                    {
-                        inspectedUnit = clickedUnit;
-                        Debug.Log($"{inspectedUnit.unitClass}의 상태 확인");
-                    }
-                }
                 break;
             case BattleState.SelectingMove:
                 if (validMoveCells.Contains(cellPos))
@@ -326,4 +339,16 @@ public class BattleManager : MonoBehaviour
         validSkillCells.Clear();
     }
 
+    public void OnCancelButtonClicked()
+    {
+        if (currentState == BattleState.Idle) return;
+
+        Debug.Log("Player 행동을 취소합니다");
+
+        ClearHighlights();
+        currentState = BattleState.Idle;
+        skillTargetUnit = null;
+
+        TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
+    }
 }
