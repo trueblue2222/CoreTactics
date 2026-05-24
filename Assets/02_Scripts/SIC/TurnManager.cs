@@ -56,12 +56,13 @@ public class TurnManager : MonoBehaviour
     {
         switch (state)
         {
-            case GameState.GameInit: OnGameInit(); break;
-            case GameState.PickFirstAttack: StartCoroutine(PickFirstAttackRoutine()); break;
-            case GameState.PlayerTurnStart: OnPlayerTurnStart(); break;
-            case GameState.PlayerTurnEnd: OnPlayerTurnEnd(); break;
-            case GameState.EnemyTurnStart: OnEnemyTurnStart(); break;
-            case GameState.LLMFallback: EnemyAIManager.Instance.ExecuteFallbackAI(); break; // 0523 LJSS : Fallback AI 추가
+            case GameState.GameInit:            OnGameInit(); break;
+            case GameState.PickFirstAttack:     StartCoroutine(PickFirstAttackRoutine()); break;
+            case GameState.PlayerTurnStart:     OnPlayerTurnStart(); break;
+            case GameState.PlayerTurnEnd:       OnPlayerTurnEnd(); break;
+            case GameState.EnemyTurnStart:      OnEnemyTurnStart(); break;
+            case GameState.LLMBuildingGameData: StartCoroutine(LLMPipelineRoutine()); break;
+            case GameState.LLMFallback:         EnemyAIManager.Instance.ExecuteFallbackAI(); break;
         }
     }
 
@@ -71,8 +72,16 @@ public class TurnManager : MonoBehaviour
         TurnCount = 0;
         Debug.Log("[TurnManager] GameInit: 씬 로드 및 유닛·코어 배치 완료");
 
-        // 배치가 완료된 뒤 선공 결정 단계로 진입
-        // 유닛 배치 로직이 비동기라면 외부에서 ChangeState(PickFirstAttack)을 호출할 것
+        // LLM 시스템 초기화
+        if (GameStateSerializer.Instance != null)
+            GameStateSerializer.Instance.InitializeUnitIds();
+        else
+            Debug.LogWarning("[TurnManager] GameStateSerializer가 씬에 없습니다. LLM 기능이 비활성화됩니다.");
+
+        // 게임 규칙 사전 전달 (백그라운드, 논블로킹)
+        if (GeminiAPIManager.Instance != null)
+            GeminiAPIManager.Instance.InitializeWithGameRules();
+
         ChangeState(GameState.PickFirstAttack);
     }
 
@@ -160,20 +169,73 @@ public class TurnManager : MonoBehaviour
         IsPlayerTurn = false;
         Debug.Log($"[TurnManager] 적 턴 시작 (턴 {TurnCount})");
 
-        Unit[] allUnits = FindObjectsOfType<Unit>();
-        foreach (Unit unit in allUnits)
+        foreach (Unit unit in FindObjectsOfType<Unit>())
+            if (unit.team == "Enemy") unit.UpdateTurnState();
+
+        // LLM 파이프라인 시작 (GeminiAPIManager가 없으면 Fallback)
+        if (GeminiAPIManager.Instance != null &&
+            GameStateSerializer.Instance != null &&
+            LLMActionParser.Instance != null &&
+            LLMActionExecutor.Instance != null)
         {
-            // 💡 적 턴에는 적 유닛만 업데이트
-            if (unit.team == "Enemy")
-            {
-                unit.UpdateTurnState();
-            }
+            ChangeState(GameState.LLMBuildingGameData);
+        }
+        else
+        {
+            Debug.LogWarning("[TurnManager] LLM 컴포넌트 누락 → Fallback AI 실행");
+            ChangeState(GameState.LLMFallback);
+        }
+    }
+
+    // ─── LLM 파이프라인 ─────────────────────────────────────────────────
+    private IEnumerator LLMPipelineRoutine()
+    {
+        // 1단계: 게임 상태 직렬화 (LLMBuildingGameData 상태에서 실행)
+        string gameStateJson = GameStateSerializer.Instance.SerializeCurrentGameState();
+        Debug.Log($"[TurnManager] 게임 상태 직렬화 완료 ({gameStateJson.Length} chars)");
+        yield return null;
+
+        // 2단계: LLM API 요청
+        ChangeState(GameState.LLMRequesting);
+        string rawResponse = null;
+        bool requestDone = false;
+        bool requestFailed = false;
+
+        GeminiAPIManager.Instance.RequestEnemyAction(
+            gameStateJson,
+            resp => { rawResponse = resp; requestDone = true; },
+            ()   => { requestFailed = true; requestDone = true; }
+        );
+
+        while (!requestDone) yield return null;
+
+        if (requestFailed || string.IsNullOrEmpty(rawResponse))
+        {
+            Debug.LogWarning("[TurnManager] LLM 요청 실패 → Fallback AI 전환");
+            ChangeState(GameState.LLMFallback);
+            yield break;
         }
 
-        // 0523 LJSS 추가 : 스킬 테스트 하기 위해 AI 턴 스킵
-        // StartCoroutine(SkipEnemyTurnRoutine());
-        // 0523 LJSS 추가 : Fallback AI 구현
-        ChangeState(GameState.LLMFallback);
+        // 3단계: 응답 수신
+        ChangeState(GameState.LLMResponseReceived);
+
+        // 4단계: 파싱 및 검증
+        ChangeState(GameState.LLMValidating);
+        EnemyActionData action = LLMActionParser.Instance.ParseAndValidate(rawResponse);
+
+        if (action == null)
+        {
+            Debug.LogWarning("[TurnManager] LLM 응답 검증 실패 → Fallback AI 전환");
+            ChangeState(GameState.LLMFallback);
+            yield break;
+        }
+
+        // 5단계: 행동 실행
+        ChangeState(GameState.EnemyActionExecute);
+        yield return StartCoroutine(LLMActionExecutor.Instance.ExecuteAction(action));
+
+        // 6단계: 플레이어 턴으로 전환
+        ChangeState(GameState.PlayerTurnStart);
     }
 
     private IEnumerator SkipEnemyTurnRoutine() // 0523 LJSS 추가 : 적 AI 미구현으로 인해 스킬테스트를 위해 추가 
