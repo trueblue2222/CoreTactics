@@ -106,3 +106,7 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 # test for commit
+
+# API key 적어두는 파일 (.env 역할)
+/[Aa]ssets/StreamingAssets/gemini_key.txt
+/[Aa]ssets/StreamingAssets/gemini_key.txt.meta

@@ -7,13 +7,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 // Gemini REST API 통신 담당.
-// Inspector에서 apiKey를 반드시 설정하세요.
+// API 키는 Assets/StreamingAssets/gemini_key.txt 에 저장하세요 (git 제외).
 // 필수: Package Manager → Add package by name → com.unity.nuget.newtonsoft-json
 public class GeminiAPIManager : MonoBehaviour
 {
     public static GeminiAPIManager Instance { get; private set; }
 
-    [SerializeField] private string apiKey = "YOUR_GEMINI_API_KEY_HERE";
+    // API 키는 코드/씬에 직접 입력하지 마세요.
+    // Assets/StreamingAssets/gemini_key.txt 파일에 키만 한 줄로 저장하면 자동으로 읽습니다.
+    private string apiKey = "";
     [SerializeField] private string modelName = "gemini-2.5-flash";
     [SerializeField] [Range(5f, 30f)] private float timeoutSeconds = 15f;
     [SerializeField] [Range(0f, 1f)] private float temperature = 0.3f;
@@ -39,7 +41,23 @@ public class GeminiAPIManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        LoadApiKey();
         cachedSystemPrompt = BuildSystemPrompt();
+    }
+
+    private void LoadApiKey()
+    {
+        string path = System.IO.Path.Combine(Application.streamingAssetsPath, "gemini_key.txt");
+        if (System.IO.File.Exists(path))
+        {
+            apiKey = System.IO.File.ReadAllText(path).Trim();
+            Debug.Log("[Gemini] API 키 로드 완료 (StreamingAssets/gemini_key.txt)");
+        }
+        else
+        {
+            Debug.LogError("[Gemini] API 키 파일 없음: Assets/StreamingAssets/gemini_key.txt\n" +
+                           "해당 파일을 생성하��� API 키를 한 줄로 입력하세요.");
+        }
     }
 
     // ─── 게임 시작 시 규칙 사전 전달 (백그라운드, 논블로킹) ───────────────
