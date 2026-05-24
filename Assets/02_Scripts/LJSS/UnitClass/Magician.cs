@@ -55,14 +55,20 @@ public class Magician : Unit
                     if (targetCell == startCell) continue;
 
                     Vector3 worldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(targetCell);
-                    Collider2D hit = Physics2D.OverlapPoint(worldPos);
+
+                    // 텔레포트 목적지 검사도 OverlapPointAll 로 교체!
+                    Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
                     bool isPassable = true;
 
-                    if (hit != null)
+                    foreach (Collider2D hit in hits)
                     {
                         Obstacle obs = hit.GetComponent<Obstacle>();
                         if (obs != null && !obs.IsPassable()) isPassable = false;
-                        if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null) isPassable = false;
+
+                        if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null)
+                        {
+                            isPassable = false; // 목적지에 다른 유닛/코어가 있다면 텔레포트 불가
+                        }
                     }
 
                     if (isPassable)
@@ -77,7 +83,8 @@ public class Magician : Unit
 
     public override void OnSkillDestinationClicked(Vector3Int cellPos)
     {
-        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+        if (TurnManager.Instance.IsPlayerTurn)
+            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
 
         Vector3 targetWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cellPos);
         targetWorldPos.z = 0;
@@ -91,7 +98,9 @@ public class Magician : Unit
         {
             Debug.Log("마법사 공간 이동 스킬 완료");
             BattleManager.Instance.skillTargetUnit = null;
-            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+
+            if (TurnManager.Instance.IsPlayerTurn)
+                TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
         }));
     }
 }

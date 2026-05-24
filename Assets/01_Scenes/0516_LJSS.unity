@@ -601,17 +601,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 215653857}
   m_CullTransparentMesh: 1
---- !u!114 &232449360 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4667712890969217263, guid: b90539c39fe7f0c478f952411bc3997a, type: 3}
-  m_PrefabInstance: {fileID: 1014569497}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 398d29ca54357d848b67ea71f2633d95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &237385317
 GameObject:
   m_ObjectHideFlags: 0
@@ -894,6 +883,50 @@ Transform:
   - {fileID: 504678642}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &407525010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 407525012}
+  - component: {fileID: 407525011}
+  m_Layer: 0
+  m_Name: EnemyAIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &407525011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407525010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56ebe87416bb28c4f944a8d21efbc059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &407525012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407525010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.447837, y: 0.19787782, z: -0.030248204}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &503506128
 GameObject:
   m_ObjectHideFlags: 0
@@ -926,11 +959,12 @@ MonoBehaviour:
   gridTilemap: {fileID: 504678644}
   currentState: 0
   playerTeamName: Player
-  activeUnit: {fileID: 232449360}
+  activeUnit: {fileID: 0}
   inspectedUnit: {fileID: 0}
   skillTargetUnit: {fileID: 0}
   moveHighlightPrefab: {fileID: 3217228297134387489, guid: 4e6ae018f95357345bb8d20640d05455, type: 3}
   attackHighlightPrefab: {fileID: 7343061062708239982, guid: 274ab75eb2f7b8345b62361d3ca389a8, type: 3}
+  validSkillCells: []
 --- !u!4 &503506130
 Transform:
   m_ObjectHideFlags: 0
@@ -3089,6 +3123,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Spike
       objectReference: {fileID: 0}
+    - target: {fileID: 2242453494792684734, guid: 7f43bebbcd281cd4cb70b49364c3d205, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3550295993508126562, guid: 7f43bebbcd281cd4cb70b49364c3d205, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.5
@@ -3344,6 +3382,10 @@ PrefabInstance:
     - target: {fileID: 3398451183410471974, guid: cc34217f8c6b74148b435a441e7f202c, type: 3}
       propertyPath: m_Name
       value: Barricade
+      objectReference: {fileID: 0}
+    - target: {fileID: 3398451183410471974, guid: cc34217f8c6b74148b435a441e7f202c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7083699093681780048, guid: cc34217f8c6b74148b435a441e7f202c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3995,3 +4037,4 @@ SceneRoots:
   - {fileID: 1855723197}
   - {fileID: 613119429}
   - {fileID: 2146086808}
+  - {fileID: 407525012}

@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 
 public class BattleManager : MonoBehaviour
 {
-    public static BattleManager Instance { get; private set;}
+    public static BattleManager Instance { get; private set; }
 
     public void Awake()
     {
@@ -222,12 +222,6 @@ public class BattleManager : MonoBehaviour
         Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
         int range = unit.attackRange;
 
-        if (unit.isSniperMode)
-        {
-            range += 1;
-            Debug.Log("저격 모드 : 공격 범위 +1");
-        }
-
         for (int x = -range; x <= range; x++)
         {
             for (int y = -range; y <= range; y++)
@@ -290,23 +284,20 @@ public class BattleManager : MonoBehaviour
                 if (visited.ContainsKey(next)) continue;
 
                 Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(next);
-
-                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
+                // 💡 OverlapPointAll을 사용하여 해당 타일의 모든 충돌체를 배열로 가져옵니다!
+                Collider2D[] hits = Physics2D.OverlapPointAll(nextWorldPos);
                 bool isPassable = true;
 
-                if (hit != null)
+                foreach (Collider2D hit in hits)
                 {
                     Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null)
-                    {
-                        isPassable = obstacle.IsPassable();
-                    }
+                    if (obstacle != null && !obstacle.IsPassable()) isPassable = false;
 
                     Unit unitOnTile = hit.GetComponent<Unit>();
-                    if (unitOnTile != null)
-                    {
-                        isPassable = false;
-                    }
+                    if (unitOnTile != null) isPassable = false; // 다른 유닛이 있으면 이동 불가
+
+                    Core coreOnTile = hit.GetComponent<Core>();
+                    if (coreOnTile != null) isPassable = false; // 코어가 있어도 이동 불가
                 }
 
                 if (isPassable)

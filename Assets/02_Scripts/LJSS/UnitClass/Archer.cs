@@ -16,10 +16,13 @@ public class Archer : Unit
 
         attackRange += 1;
         moveRange = 0;
-        
+
         skillCooldown = 2;
 
-        BattleManager.Instance.currentState = BattleManager.BattleState.Idle;
-        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+        if (TurnManager.Instance.IsPlayerTurn)
+        {
+            BattleManager.Instance.currentState = BattleManager.BattleState.Idle;
+            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+        }
     }
 }

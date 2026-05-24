@@ -56,11 +56,12 @@ public class TurnManager : MonoBehaviour
     {
         switch (state)
         {
-            case GameState.GameInit:          OnGameInit();                              break;
-            case GameState.PickFirstAttack:   StartCoroutine(PickFirstAttackRoutine()); break;
-            case GameState.PlayerTurnStart:   OnPlayerTurnStart();                      break;
-            case GameState.PlayerTurnEnd:     OnPlayerTurnEnd();                        break;
-            case GameState.EnemyTurnStart:    OnEnemyTurnStart();                       break;
+            case GameState.GameInit: OnGameInit(); break;
+            case GameState.PickFirstAttack: StartCoroutine(PickFirstAttackRoutine()); break;
+            case GameState.PlayerTurnStart: OnPlayerTurnStart(); break;
+            case GameState.PlayerTurnEnd: OnPlayerTurnEnd(); break;
+            case GameState.EnemyTurnStart: OnEnemyTurnStart(); break;
+            case GameState.LLMFallback: EnemyAIManager.Instance.ExecuteFallbackAI(); break; // 0523 LJSS : Fallback AI 추가
         }
     }
 
@@ -109,7 +110,10 @@ public class TurnManager : MonoBehaviour
 
         foreach (Unit unit in allUnits) // 모든 유닛의 턴 상태 업데이트
         {
-            unit.UpdateTurnState();
+            if (unit.team == "Player")
+            {
+                unit.UpdateTurnState();
+            }
         }
 
         // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
@@ -123,7 +127,7 @@ public class TurnManager : MonoBehaviour
         // EnemyTurnStart 전환은 UIManager의 TurnEnd 버튼이 담당
     }
 
-// ─── TurnEnd 버튼 클릭 시 호출 (UIManager에서 연결) ─────────────────
+    // ─── TurnEnd 버튼 클릭 시 호출 (UIManager에서 연결) ─────────────────
     /*
     public void OnTurnEndButtonClicked()
     {
@@ -134,14 +138,14 @@ public class TurnManager : MonoBehaviour
 
     public void OnTurnEndButtonClicked() // 0523 LJSS 수정 : 행동하기 싫을 때 턴 강제 종료
     {
-        if (CurrentState == GameState.PlayerUnitSelect || 
-            CurrentState == GameState.PlayerActionSelect || 
+        if (CurrentState == GameState.PlayerUnitSelect ||
+            CurrentState == GameState.PlayerActionSelect ||
             CurrentState == GameState.PlayerTurnEnd)
         {
             Debug.Log("[TurnManager] 사용자가 강제로 턴 종료 버튼을 눌렀습니다.");
-            
+
             // 필요하다면 여기서 선택된 유닛(activeUnit)의 선택 상태를 초기화하는 로직을 추가할 수도 있습니다.
-            
+
             ChangeState(GameState.EnemyTurnStart);
         }
         else
@@ -156,8 +160,20 @@ public class TurnManager : MonoBehaviour
         IsPlayerTurn = false;
         Debug.Log($"[TurnManager] 적 턴 시작 (턴 {TurnCount})");
 
+        Unit[] allUnits = FindObjectsOfType<Unit>();
+        foreach (Unit unit in allUnits)
+        {
+            // 💡 적 턴에는 적 유닛만 업데이트
+            if (unit.team == "Enemy")
+            {
+                unit.UpdateTurnState();
+            }
+        }
+
         // 0523 LJSS 추가 : 스킬 테스트 하기 위해 AI 턴 스킵
-        StartCoroutine(SkipEnemyTurnRoutine());
+        // StartCoroutine(SkipEnemyTurnRoutine());
+        // 0523 LJSS 추가 : Fallback AI 구현
+        ChangeState(GameState.LLMFallback);
     }
 
     private IEnumerator SkipEnemyTurnRoutine() // 0523 LJSS 추가 : 적 AI 미구현으로 인해 스킬테스트를 위해 추가 

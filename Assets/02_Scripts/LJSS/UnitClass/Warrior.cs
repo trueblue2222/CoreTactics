@@ -18,22 +18,40 @@ public class Warrior : Unit
                 Vector3Int nextCell = startCell + dir * i;
                 Vector3 nextWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(nextCell);
 
-                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
-                if (hit != null)
+                // 💡 OverlapPointAll 로 교체
+                Collider2D[] hits = Physics2D.OverlapPointAll(nextWorldPos);
+                bool canLand = true;
+
+                foreach (Collider2D hit in hits)
                 {
                     Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null && !obstacle.IsPassable()) break;
+                    if (obstacle != null && !obstacle.IsPassable())
+                    {
+                        canLand = false;
+                        break; // 벽을 만나면 더 이상 전진 방향 하이라이트 생성 중단
+                    }
+
+                    if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null)
+                    {
+                        canLand = false; // 유닛이나 코어가 서 있으면 그 칸을 착지 목적지로 클릭할 수는 없음
+                    }
                 }
 
-                BattleManager.Instance.validSkillCells.Add(nextCell);
-                BattleManager.Instance.SpawnHighlight(nextCell);
+                if (canLand)
+                {
+                    BattleManager.Instance.validSkillCells.Add(nextCell);
+                    BattleManager.Instance.SpawnHighlight(nextCell);
+                }
             }
         }
     }
 
     public override void OnSkillTargetClicked(Vector3Int cellPos, Unit clickedUnit, Core clickedCore)
     {
-        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+        if (TurnManager.Instance.IsPlayerTurn)
+        {
+            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+        }
         Vector3Int startCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
 
         Vector3Int dir = new Vector3Int(
@@ -48,8 +66,10 @@ public class Warrior : Unit
             Vector3Int pathCell = new Vector3Int(startCell.x + (dir.x * i), startCell.y + (dir.y * i), 0);
             Vector3 pathWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(pathCell);
 
-            Collider2D hitTarget = Physics2D.OverlapPoint(pathWorldPos);
-            if (hitTarget != null)
+            // 경로상에 있는 모든 유닛/코어에게 대미지를 주기 위해 OverlapPointAll 사용
+            Collider2D[] hitsTarget = Physics2D.OverlapPointAll(pathWorldPos);
+
+            foreach (Collider2D hitTarget in hitsTarget)
             {
                 Unit targetUnit = hitTarget.GetComponent<Unit>();
                 if (targetUnit != null && targetUnit.team != team) targetUnit.TakeDamage(20);
@@ -69,7 +89,11 @@ public class Warrior : Unit
         {
             Debug.Log("돌진 스킬 완료");
             skillCooldown = 2; // 전사 쿨타임
-            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+
+            if (TurnManager.Instance.IsPlayerTurn)
+            {
+                TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+            }
         }));
     }
 }
