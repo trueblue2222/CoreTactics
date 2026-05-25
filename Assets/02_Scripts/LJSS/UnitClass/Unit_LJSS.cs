@@ -119,9 +119,14 @@ public class Unit : MonoBehaviour
 
     public IEnumerator MoveSmoothly(Vector3 targetPos, Action onMoveComplete)
     {
+        yield return StartCoroutine(MoveSmoothly(targetPos, moveSpeed, onMoveComplete));
+    }
+
+    public IEnumerator MoveSmoothly(Vector3 targetPos, float speed, Action onMoveComplete)
+    {
         while (Vector3.Distance(transform.position, targetPos) > 0.01f)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
             yield return null;
         }
 

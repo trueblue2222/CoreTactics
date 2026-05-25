@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class Warrior : Unit
 {
+    [Header("Dash Skill")]
+    public float dashSpeed = 10f;
+
     public override void OnSkillButtonPressed()
     {
         Debug.Log("돌진할 방향의 타일을 클릭하세요.");
@@ -85,7 +88,7 @@ public class Warrior : Unit
         Vector3 targetWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cellPos);
         targetWorldPos.z = 0;
 
-        StartCoroutine(MoveSmoothly(targetWorldPos, () =>
+        StartCoroutine(MoveSmoothly(targetWorldPos, dashSpeed, () =>
         {
             Debug.Log("돌진 스킬 완료");
             skillCooldown = 2; // 전사 쿨타임

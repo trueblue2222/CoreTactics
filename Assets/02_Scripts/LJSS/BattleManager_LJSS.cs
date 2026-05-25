@@ -155,12 +155,15 @@ public class BattleManager : MonoBehaviour
                         TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                         Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
                         centerPos.z = 0;
-                        activeUnit.transform.position = centerPos;
                         Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
 
                         ClearHighlights();
                         currentState = BattleState.Idle;
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        Unit movingUnit = activeUnit;
+                        StartCoroutine(movingUnit.MoveSmoothly(centerPos, () =>
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }));
                     }
                     else
                     {

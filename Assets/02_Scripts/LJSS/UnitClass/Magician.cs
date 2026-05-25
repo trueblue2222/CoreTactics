@@ -94,13 +94,13 @@ public class Magician : Unit
 
         skillCooldown = 3; // 마법사 쿨타임
 
-        StartCoroutine(BattleManager.Instance.skillTargetUnit.MoveSmoothly(targetWorldPos, () =>
-        {
-            Debug.Log("마법사 공간 이동 스킬 완료");
-            BattleManager.Instance.skillTargetUnit = null;
-
-            if (TurnManager.Instance.IsPlayerTurn)
-                TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-        }));
+        Unit target = BattleManager.Instance.skillTargetUnit;
+        target.transform.position = targetWorldPos;
+ 
+        Debug.Log("마법사 공간 이동 스킬 완료");
+        BattleManager.Instance.skillTargetUnit = null;
+ 
+        if (TurnManager.Instance.IsPlayerTurn)
+            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
     }
 }
