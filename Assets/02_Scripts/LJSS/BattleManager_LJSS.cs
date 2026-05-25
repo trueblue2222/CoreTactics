@@ -74,11 +74,20 @@ public class BattleManager : MonoBehaviour
 
     private void OnTurnStateChanged(GameState newState)
     {
+        if (newState == GameState.PlayerTurnEnd)
+        {
+            // 행동 완료 → 버튼 비활성화
+            UIManager.Instance.HideActionButtons();
+
+        }
+
         if (newState == GameState.EnemyTurnStart)
         {
             Debug.Log("[BattleManager] 적 턴 시작시 플레이어 행동 및 하이라이트 및 선택 상태 초기화");
 
             ClearHighlights();
+            if (activeUnit != null) activeUnit.ClearHighlights();
+            if (inspectedUnit != null) inspectedUnit.ClearHighlights();
 
             currentState = BattleState.Idle;
 
@@ -100,12 +109,16 @@ public class BattleManager : MonoBehaviour
 
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
-         if (clickedUnit != null)
+        if (clickedUnit != null)
         {
             // 적군 유닛이면 항상 inspectedUnit으로 등록
             if (clickedUnit.team != playerTeamName)
             {
+                if (inspectedUnit != null && inspectedUnit != clickedUnit)
+                    inspectedUnit.SetInspectedHighlight(false);
+
                 inspectedUnit = clickedUnit;
+                inspectedUnit.SetInspectedHighlight(true);
                 UIManager.Instance.UpdateInspectedUnitUI(inspectedUnit);
                 Debug.Log($"[적 유닛 확인] {inspectedUnit.unitClass}");
             }
@@ -115,94 +128,98 @@ public class BattleManager : MonoBehaviour
                 GameState gs = TurnManager.Instance.CurrentState;
                 bool isSelectPhase = gs == GameState.PlayerUnitSelect
                                   || gs == GameState.PlayerActionSelect;
- 
+
                 if (isSelectPhase)
                 {
+                    if (activeUnit != null && activeUnit != clickedUnit)
+                        activeUnit.SetActiveHighlight(false);
+
                     activeUnit = clickedUnit;
+                    activeUnit.SetActiveHighlight(true);
                     Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
                     UIManager.Instance.UpdateActiveUnitUI(activeUnit);
                     UIManager.Instance.ShowActionButtons();
                     TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
-                    return; // 아래 switch 처리 불필요
+                    return;
                 }
             }
         }
 
         switch (currentState)
-        {
-            case BattleState.Idle:
-                break;
-            case BattleState.SelectingMove:
-                if (validMoveCells.Contains(cellPos))
-                {
-                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                    Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
-                    centerPos.z = 0;
-                    activeUnit.transform.position = centerPos;
-                    Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
-
-                    ClearHighlights();
-                    currentState = BattleState.Idle;
-                    TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                }
-                else
-                {
-                    Debug.Log("이동할 수 없는 범위입니다.");
-                }
-                break;
-            case BattleState.SelectingAttack:
-                if (validAttackCells.Contains(cellPos))
-                {
-                    if (clickedUnit != null && clickedUnit.team != activeUnit.team)
+            {
+                case BattleState.Idle:
+                    break;
+                case BattleState.SelectingMove:
+                    if (validMoveCells.Contains(cellPos))
                     {
                         TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                        Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
-                        clickedUnit.TakeDamage(activeUnit.atk);
+                        Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
+                        centerPos.z = 0;
+                        activeUnit.transform.position = centerPos;
+                        Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
 
                         ClearHighlights();
                         currentState = BattleState.Idle;
                         TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
                     }
-                    else if (clickedCore != null && clickedCore.team != activeUnit.team)
+                    else
                     {
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                        Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
-                        clickedCore.TakeDamage(activeUnit.atk);
-
-                        ClearHighlights();
-                        currentState = BattleState.Idle;
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        Debug.Log("이동할 수 없는 범위입니다.");
                     }
-                }
-                else
-                {
-                    Debug.Log("공격 범위 밖입니다.");
-                }
-                break;
-            case BattleState.SelectingSkill:
-                if (validSkillCells.Contains(cellPos))
-                {
-                    // 💡 전사든 마법사든 본인의 타겟 클릭 로직을 알아서 실행합니다.
-                    activeUnit.OnSkillTargetClicked(cellPos, clickedUnit, clickedCore);
-                }
-                else
-                {
-                    Debug.Log("스킬을 사용할 수 없는 위치입니다.");
-                }
-                break;
+                    break;
+                case BattleState.SelectingAttack:
+                    if (validAttackCells.Contains(cellPos))
+                    {
+                        if (clickedUnit != null && clickedUnit.team != activeUnit.team)
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
+                            clickedUnit.TakeDamage(activeUnit.atk);
 
-            case BattleState.SelectingSkillDestination:
-                if (validSkillCells.Contains(cellPos))
-                {
-                    // 💡 마법사 본인의 도착지 클릭 로직을 알아서 실행합니다.
-                    activeUnit.OnSkillDestinationClicked(cellPos);
-                }
-                else
-                {
-                    Debug.Log("이동할 수 없는 자리입니다");
-                }
-                break;
-        }
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }
+                        else if (clickedCore != null && clickedCore.team != activeUnit.team)
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
+                            clickedCore.TakeDamage(activeUnit.atk);
+
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("공격 범위 밖입니다.");
+                    }
+                    break;
+                case BattleState.SelectingSkill:
+                    if (validSkillCells.Contains(cellPos))
+                    {
+                        // 💡 전사든 마법사든 본인의 타겟 클릭 로직을 알아서 실행합니다.
+                        activeUnit.OnSkillTargetClicked(cellPos, clickedUnit, clickedCore);
+                    }
+                    else
+                    {
+                        Debug.Log("스킬을 사용할 수 없는 위치입니다.");
+                    }
+                    break;
+
+                case BattleState.SelectingSkillDestination:
+                    if (validSkillCells.Contains(cellPos))
+                    {
+                        // 💡 마법사 본인의 도착지 클릭 로직을 알아서 실행합니다.
+                        activeUnit.OnSkillDestinationClicked(cellPos);
+                    }
+                    else
+                    {
+                        Debug.Log("이동할 수 없는 자리입니다");
+                    }
+                    break;
+            }
     }
 
     public void OnMoveButtonClicked()

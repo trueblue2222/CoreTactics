@@ -30,6 +30,10 @@ public class Unit : MonoBehaviour
     public float moveSpeed = 2f;
     [SerializeField] private float hitFlashDuration = 0.3f;
 
+    [Header("Highlgiht")]
+    public GameObject activeHighlight;
+    public GameObject inspectedHighlight;
+
     private SpriteRenderer spriteRenderer;
 
     void Awake()
@@ -41,6 +45,7 @@ public class Unit : MonoBehaviour
     void Start()
     {
         currentHp = maxHp;
+        ClearHighlights();
     }
 
     public void TakeDamage(int damage)
@@ -83,12 +88,12 @@ public class Unit : MonoBehaviour
         Debug.Log("기본 유닛은 스킬이 없습니다.");
     }
 
-    public virtual void OnSkillTargetClicked(Vector3Int cellPos, Unit clickedUnit, Core clickedCore) 
-    { 
+    public virtual void OnSkillTargetClicked(Vector3Int cellPos, Unit clickedUnit, Core clickedCore)
+    {
     }
 
-    public virtual void OnSkillDestinationClicked(Vector3Int cellPos) 
-    { 
+    public virtual void OnSkillDestinationClicked(Vector3Int cellPos)
+    {
     }
 
     public void UpdateTurnState()
@@ -122,5 +127,23 @@ public class Unit : MonoBehaviour
 
         transform.position = targetPos;
         onMoveComplete?.Invoke();
+    }
+
+    public void SetActiveHighlight(bool on)
+    {
+        if (activeHighlight != null) activeHighlight.SetActive(on);
+        if (on && inspectedHighlight != null) inspectedHighlight.SetActive(false);
+    }
+
+    public void SetInspectedHighlight(bool on)
+    {
+        if (inspectedHighlight != null) inspectedHighlight.SetActive(on);
+        if (on && activeHighlight != null)    activeHighlight.SetActive(false);
+    }
+
+    public void ClearHighlights()
+    {
+        if (activeHighlight != null)    activeHighlight.SetActive(false);
+        if (inspectedHighlight != null) inspectedHighlight.SetActive(false);
     }
 }

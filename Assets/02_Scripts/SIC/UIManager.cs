@@ -54,11 +54,19 @@ public class UIManager : MonoBehaviour
 
     // ── 기본 초상화 (스프라이트 미설정 시 폴백) ───────────────────
     [Header("Misc")]
-    public Sprite defaultSprite;
     public GameObject turnEndNoticeObject;
 
     [Header("Action Button Panel")]
     public GameObject actionButtonPanel;
+    public Button moveButton;
+    public Button attackButton;
+    public Button skillButton;
+    public Button cancelButton;
+
+    [Header("Default")]
+    public Sprite defaultPortraitSprite;
+    private const string DEFAULT_STAT = "-";
+
 
     void Awake()
     {
@@ -79,6 +87,9 @@ public class UIManager : MonoBehaviour
 
         TurnManager.Instance.OnFirstAttackDecided += ShowFirstAttackResult;
         TurnManager.Instance.OnStateChanged += OnStateChanged;
+
+        ClearActiveUnitUI();
+        ClearInspectedUnitUI();
     }
 
     void OnDestroy()
@@ -180,13 +191,20 @@ public class UIManager : MonoBehaviour
     // ────────────────────────────────────────────────────────────
     public void ClearActiveUnitUI()
     {
-        activeUnitPanel.SetActive(false);
+        activeUnitPortrait.sprite = defaultPortraitSprite;
+        activeUnitHP.text = DEFAULT_STAT;
+        activeUnitAtk.text = DEFAULT_STAT;
+        activeUnitDef.text = DEFAULT_STAT;
+
         HideActionButtons();
     }
 
     public void ClearInspectedUnitUI()
     {
-        inspectedUnitPanel.SetActive(false);
+        inspectedUnitPortrait.sprite = defaultPortraitSprite;
+        inspectedUnitHP.text = DEFAULT_STAT;
+        inspectedUnitAtk.text = DEFAULT_STAT;
+        inspectedUnitDef.text = DEFAULT_STAT;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -216,18 +234,28 @@ public class UIManager : MonoBehaviour
             _ => null
         };
 
-        return portrait != null ? portrait : defaultSprite;
+        return portrait != null ? portrait : defaultPortraitSprite;
     }
 
     public void ShowActionButtons()
     {
         if (actionButtonPanel != null)
             actionButtonPanel.SetActive(true);
+
+        
+        SetActionButtons(true);
     }
 
     public void HideActionButtons()
     {
-        if (actionButtonPanel != null)
-            actionButtonPanel.SetActive(false);
+        SetActionButtons(false);
+    }
+
+    private void SetActionButtons(bool interactable)
+    {
+        if (moveButton != null) moveButton.interactable = interactable;
+        if (attackButton != null) attackButton.interactable = interactable;
+        if (skillButton != null) skillButton.interactable = interactable;
+        if (cancelButton != null) cancelButton.interactable = interactable;
     }
 }
