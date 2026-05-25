@@ -6,12 +6,20 @@ using UnityEngine.EventSystems;
 
 public class BattleManager : MonoBehaviour
 {
+    public static BattleManager Instance { get; private set; }
+
+    public void Awake()
+    {
+        Instance = this;
+    }
+
     public enum BattleState
     {
         Idle,
         SelectingMove,
         SelectingAttack,
-        SelectingSKill
+        SelectingSkill,
+        SelectingSkillDestination // 마법사용 스킬 타겟
     }
 
     [Header("System")]
@@ -22,6 +30,7 @@ public class BattleManager : MonoBehaviour
     [Header("Units")]
     public Unit activeUnit;
     public Unit inspectedUnit;
+    public Unit skillTargetUnit;
 
     [Header("Movement Highlights")]
     public GameObject moveHighlightPrefab;
@@ -33,7 +42,12 @@ public class BattleManager : MonoBehaviour
     private List<Vector3Int> validAttackCells = new List<Vector3Int>();
 
     [Header("Skill Highlights")]
-    private List<Vector3Int> validSkillCells = new List<Vector3Int>();
+    public List<Vector3Int> validSkillCells = new List<Vector3Int>();
+
+    void Start()
+    {
+        TurnManager.Instance.OnStateChanged += OnTurnStateChanged;
+    }
 
     void Update()
     {
@@ -50,6 +64,42 @@ public class BattleManager : MonoBehaviour
             HandleMouseClick();
     }
 
+    void OnDestroy()
+    {
+        if (TurnManager.Instance != null)
+        {
+            TurnManager.Instance.OnStateChanged -= OnTurnStateChanged;
+        }
+    }
+
+    private void OnTurnStateChanged(GameState newState)
+    {
+        if (newState == GameState.PlayerTurnEnd)
+        {
+            // 행동 완료 → 버튼 비활성화
+            UIManager.Instance.HideActionButtons();
+
+        }
+
+        if (newState == GameState.EnemyTurnStart)
+        {
+            Debug.Log("[BattleManager] 적 턴 시작시 플레이어 행동 및 하이라이트 및 선택 상태 초기화");
+
+            ClearHighlights();
+            if (activeUnit != null) activeUnit.ClearHighlights();
+            if (inspectedUnit != null) inspectedUnit.ClearHighlights();
+
+            currentState = BattleState.Idle;
+
+            activeUnit = null;
+            inspectedUnit = null;
+            skillTargetUnit = null;
+
+            UIManager.Instance.ClearActiveUnitUI();
+            UIManager.Instance.ClearInspectedUnitUI();
+        }
+    }
+
     void HandleMouseClick()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -59,137 +109,131 @@ public class BattleManager : MonoBehaviour
 
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
-        switch (currentState)
+        if (clickedUnit != null)
         {
-            case BattleState.Idle:
-                if (clickedUnit != null)
-                {
-                    GameState gs = TurnManager.Instance.CurrentState;
-                    bool isSelectPhase = gs == GameState.PlayerUnitSelect
-                                     || gs == GameState.PlayerActionSelect;
+            // 적군 유닛이면 항상 inspectedUnit으로 등록
+            if (clickedUnit.team != playerTeamName)
+            {
+                if (inspectedUnit != null && inspectedUnit != clickedUnit)
+                    inspectedUnit.SetInspectedHighlight(false);
 
-                    if (isSelectPhase && clickedUnit.team == playerTeamName)
+                inspectedUnit = clickedUnit;
+                inspectedUnit.SetInspectedHighlight(true);
+                UIManager.Instance.UpdateInspectedUnitUI(inspectedUnit);
+                Debug.Log($"[적 유닛 확인] {inspectedUnit.unitClass}");
+            }
+            // 아군 유닛을 Idle + 유닛 선택 가능 페이즈에서 클릭 → activeUnit 변경
+            else if (currentState == BattleState.Idle)
+            {
+                GameState gs = TurnManager.Instance.CurrentState;
+                bool isSelectPhase = gs == GameState.PlayerUnitSelect
+                                  || gs == GameState.PlayerActionSelect;
+
+                if (isSelectPhase)
+                {
+                    if (activeUnit != null && activeUnit != clickedUnit)
+                        activeUnit.SetActiveHighlight(false);
+
+                    activeUnit = clickedUnit;
+                    activeUnit.SetActiveHighlight(true);
+                    Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
+                    UIManager.Instance.UpdateActiveUnitUI(activeUnit);
+                    UIManager.Instance.ShowActionButtons();
+                    TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
+                    return;
+                }
+            }
+        }
+
+        switch (currentState)
+            {
+                case BattleState.Idle:
+                    break;
+                case BattleState.SelectingMove:
+                    if (validMoveCells.Contains(cellPos))
                     {
-                        activeUnit = clickedUnit;
-                        Debug.Log($"[유닛 선택] {activeUnit.unitClass}");
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
+                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                        Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
+                        centerPos.z = 0;
+                        Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
+
+                        ClearHighlights();
+                        currentState = BattleState.Idle;
+                        Unit movingUnit = activeUnit;
+                        StartCoroutine(movingUnit.MoveSmoothly(centerPos, () =>
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }));
                     }
                     else
                     {
-                        inspectedUnit = clickedUnit;
-                        Debug.Log($"{inspectedUnit.unitClass}의 상태 확인");
+                        Debug.Log("이동할 수 없는 범위입니다.");
                     }
-                }
-                break;
-            case BattleState.SelectingMove:
-                if (validMoveCells.Contains(cellPos))
-                {
-                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                    Vector3 centerPos = gridTilemap.GetCellCenterWorld(cellPos);
-                    centerPos.z = 0;
-                    activeUnit.transform.position = centerPos;
-                    Debug.Log($"[이동] {activeUnit.unitClass}가 {cellPos}로 이동");
-
-                    ClearHighlights();
-                    currentState = BattleState.Idle;
-                    TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                }
-                else
-                {
-                    Debug.Log("이동할 수 없는 범위입니다.");
-                }
-                break;
-            case BattleState.SelectingAttack:
-                if (validAttackCells.Contains(cellPos))
-                {
-                    if (clickedUnit != null && clickedUnit.team != activeUnit.team)
+                    break;
+                case BattleState.SelectingAttack:
+                    if (validAttackCells.Contains(cellPos))
                     {
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                        Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
-                        clickedUnit.TakeDamage(activeUnit.atk);
-
-                        ClearHighlights();
-                        currentState = BattleState.Idle;
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                    }
-                    else if (clickedCore != null && clickedCore.team != activeUnit.team)
-                    {
-                        TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                        Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
-                        clickedCore.TakeDamage(activeUnit.atk);
-
-                        ClearHighlights();
-                        currentState = BattleState.Idle;
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                    }
-                }
-                else
-                {
-                    Debug.Log("공격 범위 밖입니다.");
-                }
-                break;
-            case BattleState.SelectingSKill:
-                if (validSkillCells.Contains(cellPos))
-                {
-                    TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
-                    Vector3Int startCell = gridTilemap.WorldToCell(activeUnit.transform.position);
-
-                    Vector3Int dir = new Vector3Int(
-                        Mathf.Clamp((cellPos.x - startCell.x), -1, 1),
-                        Mathf.Clamp((cellPos.y - startCell.y), -1, 1),
-                        0
-                    );
-                    int dist = (int)Mathf.Max(Mathf.Abs(cellPos.x - startCell.x), Mathf.Abs(cellPos.y - startCell.y));
-
-                    for(int i = 1; i <= dist; i++)
-                    {
-                        Vector3Int pathCell = new Vector3Int(
-                            (int)(startCell.x + (dir.x * i)),
-                            (int)(startCell.y + (dir.y * i)),
-                            0
-                        );
-                        Vector3 pathWorldPos = gridTilemap.GetCellCenterWorld(pathCell);
-
-                        Collider2D hitTarget = Physics2D.OverlapPoint(pathWorldPos);
-                        if (hitTarget != null)
+                        if (clickedUnit != null && clickedUnit.team != activeUnit.team)
                         {
-                            Unit targetUnit = hitTarget.GetComponent<Unit>();
-                            if (targetUnit != null && targetUnit.team != activeUnit.team)
-                            {
-                                Debug.Log($"[돌진 공격] {targetUnit.unitClass}에게 20 데미지");
-                                targetUnit.TakeDamage(20);
-                            }
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
+                            clickedUnit.TakeDamage(activeUnit.atk);
 
-                            Core targetCore = hitTarget.GetComponent<Core>();
-                            if (targetCore != null && targetCore.team != activeUnit.team)
-                            {
-                                targetCore.TakeDamage(20);
-                            }                        
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }
+                        else if (clickedCore != null && clickedCore.team != activeUnit.team)
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
+                            clickedCore.TakeDamage(activeUnit.atk);
+
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
                         }
                     }
-                    ClearHighlights();
-                    currentState = BattleState.Idle;
-
-                    Vector3 targetWorldPos = gridTilemap.GetCellCenterWorld(cellPos);
-                    targetWorldPos.z = 0;
-
-                    StartCoroutine(activeUnit.MoveSmoothly(targetWorldPos, () =>
+                    else
                     {
-                        Debug.Log("돌진 스킬 완료");
-                        TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-                    }));
-                }
-                else
-                {
-                    Debug.Log("스킬을 사용할 수 없는 위치입니다.");
-                }
-                break;
-        }
+                        Debug.Log("공격 범위 밖입니다.");
+                    }
+                    break;
+                case BattleState.SelectingSkill:
+                    if (validSkillCells.Contains(cellPos))
+                    {
+                        // 💡 전사든 마법사든 본인의 타겟 클릭 로직을 알아서 실행합니다.
+                        activeUnit.OnSkillTargetClicked(cellPos, clickedUnit, clickedCore);
+                    }
+                    else
+                    {
+                        Debug.Log("스킬을 사용할 수 없는 위치입니다.");
+                    }
+                    break;
+
+                case BattleState.SelectingSkillDestination:
+                    if (validSkillCells.Contains(cellPos))
+                    {
+                        // 💡 마법사 본인의 도착지 클릭 로직을 알아서 실행합니다.
+                        activeUnit.OnSkillDestinationClicked(cellPos);
+                    }
+                    else
+                    {
+                        Debug.Log("이동할 수 없는 자리입니다");
+                    }
+                    break;
+            }
     }
 
     public void OnMoveButtonClicked()
     {
         if (activeUnit == null) return;
+
+        if (activeUnit.isSniperMode)
+        {
+            Debug.Log("저격 모드 중에는 이동할 수 없습니다");
+            return;
+        }
         Debug.Log("이동할 타일을 클릭하세요");
         currentState = BattleState.SelectingMove;
         ShowMovableTiles(activeUnit);
@@ -232,40 +276,13 @@ public class BattleManager : MonoBehaviour
     public void OnSkillButtonClicked()
     {
         if (activeUnit == null) return;
-        Debug.Log("스킬을 사용할 대상을 클릭하세요");
-        currentState = BattleState.SelectingSKill;
-        ShowWarriorSkillTiles(activeUnit);
-    }
-
-    void ShowWarriorSkillTiles(Unit unit)
-    {
-        ClearHighlights();
-
-        Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
-
-        Vector3Int[] directions = {Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right};
-
-        foreach (Vector3Int dir in directions)
+        if (activeUnit.skillCooldown > 0)
         {
-            for (int i = 1; i <= 4; i++)
-            {
-                Vector3Int nextCell = startCell + dir * i;
-                Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(nextCell);
-
-                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
-                if (hit != null)
-                {
-                    Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null && !obstacle.IsPassable())
-                    {
-                        break;
-                    }
-                }
-
-                validSkillCells.Add(nextCell);
-                SpawnHighlight(nextCell);
-            }
+            Debug.Log($"{activeUnit.unitClass} 쿨타임 대기중 ({activeUnit.skillCooldown}턴 남음)");
+            return;
         }
+
+        activeUnit.OnSkillButtonPressed();
     }
 
     void ShowMovableTiles(Unit unit)
@@ -300,23 +317,20 @@ public class BattleManager : MonoBehaviour
                 if (visited.ContainsKey(next)) continue;
 
                 Vector3 nextWorldPos = gridTilemap.GetCellCenterWorld(next);
-
-                Collider2D hit = Physics2D.OverlapPoint(nextWorldPos);
+                // 💡 OverlapPointAll을 사용하여 해당 타일의 모든 충돌체를 배열로 가져옵니다!
+                Collider2D[] hits = Physics2D.OverlapPointAll(nextWorldPos);
                 bool isPassable = true;
 
-                if (hit != null)
+                foreach (Collider2D hit in hits)
                 {
                     Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null)
-                    {
-                        isPassable = obstacle.IsPassable();
-                    }
+                    if (obstacle != null && !obstacle.IsPassable()) isPassable = false;
 
                     Unit unitOnTile = hit.GetComponent<Unit>();
-                    if (unitOnTile != null)
-                    {
-                        isPassable = false;
-                    }
+                    if (unitOnTile != null) isPassable = false; // 다른 유닛이 있으면 이동 불가
+
+                    Core coreOnTile = hit.GetComponent<Core>();
+                    if (coreOnTile != null) isPassable = false; // 코어가 있어도 이동 불가
                 }
 
                 if (isPassable)
@@ -328,7 +342,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    void SpawnHighlight(Vector3Int cellPos)
+    public void SpawnHighlight(Vector3Int cellPos)
     {
         Vector3 pos = gridTilemap.GetCellCenterWorld(cellPos);
         pos.z = 0;
@@ -336,12 +350,25 @@ public class BattleManager : MonoBehaviour
         activeHighlights.Add(highlight);
     }
 
-    void ClearHighlights()
+    public void ClearHighlights()
     {
         foreach (var obj in activeHighlights) Destroy(obj);
         activeHighlights.Clear();
         validMoveCells.Clear();
         validAttackCells.Clear();
         validSkillCells.Clear();
+    }
+
+    public void OnCancelButtonClicked()
+    {
+        if (currentState == BattleState.Idle) return;
+
+        Debug.Log("Player 행동을 취소합니다");
+
+        ClearHighlights();
+        currentState = BattleState.Idle;
+        skillTargetUnit = null;
+
+        TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
     }
 }
