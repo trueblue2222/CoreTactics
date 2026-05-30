@@ -126,9 +126,11 @@ public class TurnManager : MonoBehaviour
         }
 
         // slime 기믹 때문에 추가
-        if (TurnCount > 1 && GiantSlime.Instance != null)
+        if (TurnCount > 1)
         {
-            GiantSlime.Instance.OnRoundPassed();
+            if (GiantSlime.Instance != null) GiantSlime.Instance.OnRoundPassed();
+
+            if (BlackMage.Instance != null) BlackMage.Instance.OnRoundPassed();
         }
 
         // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
@@ -249,5 +251,11 @@ public class TurnManager : MonoBehaviour
         Debug.Log("적 AI 미구현 : 1초 대기 후플레이어 턴으로 넘어가기");
         yield return new WaitForSeconds(1.0f);
         ChangeState(GameState.PlayerTurnStart);
+    }
+
+    // blackMage 접근 위해 설정
+    public void SetInputBlocked(bool isBlocked)
+    {
+        IsInputBlocked = isBlocked;
     }
 }
