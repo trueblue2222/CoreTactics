@@ -94,13 +94,35 @@ public class Magician : Unit
 
         skillCooldown = 3; // 마법사 쿨타임
 
-        Unit target = BattleManager.Instance.skillTargetUnit;
-        target.transform.position = targetWorldPos;
- 
-        Debug.Log("마법사 공간 이동 스킬 완료");
-        BattleManager.Instance.skillTargetUnit = null;
- 
-        if (TurnManager.Instance.IsPlayerTurn)
-            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+        Unit targetToMove = BattleManager.Instance.skillTargetUnit;
+        TeleportTargetUnit(targetToMove, targetWorldPos, () =>
+        {
+            Debug.Log("마법사 공간 이동 스킬 완료 (순간이동)");
+            BattleManager.Instance.skillTargetUnit = null;
+
+            if (TurnManager.Instance.IsPlayerTurn)
+                TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+        });
+    }
+
+    private void TeleportTargetUnit(Unit target, Vector3 targetPos, System.Action onComplete)
+    {
+        // 1. 마법사 본인(transform)이 아니라 대상(target)의 위치를 즉시 이동시킵니다.
+        target.transform.position = targetPos;
+
+        // 2. 타겟이 도착한 위치의 바닥에 점액이 있는지 검사합니다.
+        Collider2D[] hits = Physics2D.OverlapPointAll(targetPos);
+        foreach (Collider2D hit in hits)
+        {
+            SlimePuddle puddle = hit.GetComponent<SlimePuddle>();
+            if (puddle != null) 
+            {
+                // 나(this)가 아니라, 내가 던진 대상(target)에게 디버프를 걸라고 지시해야 합니다!
+                puddle.ApplyDebuff(target); 
+            }
+        }
+
+        // 3. 콜백(턴 종료 등) 실행
+        onComplete?.Invoke();
     }
 }

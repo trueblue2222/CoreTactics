@@ -25,6 +25,7 @@ public class Unit : MonoBehaviour
     public int skillCooldown = 0;
     public bool isSniperMode = false;
     public int sniperModeTurnsLeft = 0;
+    public int rootedTurns = 0; // 점액 구속 상태 (0이면 정상, 1 이상 이면 이동 불가)
 
     [Header("Animation Setting")]
     public float moveSpeed = 2f;
@@ -103,6 +104,17 @@ public class Unit : MonoBehaviour
             skillCooldown--;
         }
 
+        if (rootedTurns > 0)
+        {
+            rootedTurns--;
+            if (rootedTurns == 0) 
+            {
+                Debug.Log($"[{team}] {unitClass} 점액 구속 해제");
+
+                SetSlimeColor(false);
+            }
+        }
+
         if (unitClass == UnitClass.Archer && isSniperMode)
         {
             sniperModeTurnsLeft--;
@@ -124,13 +136,44 @@ public class Unit : MonoBehaviour
 
     public IEnumerator MoveSmoothly(Vector3 targetPos, float speed, Action onMoveComplete)
     {
+        bool interceptedBySlime = false;
+
         while (Vector3.Distance(transform.position, targetPos) > 0.01f)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
+
+            Collider2D[] hits = Physics2D.OverlapPointAll(transform.position);
+            SlimePuddle puddleFound = null;
+
+            foreach (Collider2D hit in hits)
+            {
+                SlimePuddle puddle = hit.GetComponent<SlimePuddle>();
+                if (puddle != null)
+                {
+                    puddleFound = puddle;
+                    break;
+                }
+            }
+
+            if (puddleFound != null)
+            {
+                Vector3 stopPos = puddleFound.transform.position;
+                stopPos.z = 0;
+                transform.position = stopPos;
+
+                puddleFound.ApplyDebuff(this);
+
+                interceptedBySlime = true;
+                break;
+            }
             yield return null;
         }
 
-        transform.position = targetPos;
+        if (!interceptedBySlime)
+        {
+            transform.position = targetPos;
+        }
+
         onMoveComplete?.Invoke();
     }
 
@@ -143,12 +186,19 @@ public class Unit : MonoBehaviour
     public void SetInspectedHighlight(bool on)
     {
         if (inspectedHighlight != null) inspectedHighlight.SetActive(on);
-        if (on && activeHighlight != null)    activeHighlight.SetActive(false);
+        if (on && activeHighlight != null) activeHighlight.SetActive(false);
     }
 
     public void ClearHighlights()
     {
-        if (activeHighlight != null)    activeHighlight.SetActive(false);
+        if (activeHighlight != null) activeHighlight.SetActive(false);
         if (inspectedHighlight != null) inspectedHighlight.SetActive(false);
+    }
+
+    public void SetSlimeColor(bool isRooted)
+    {
+        if (spriteRenderer == null) return;
+
+        spriteRenderer.color = isRooted ? Color.green : Color.white;
     }
 }

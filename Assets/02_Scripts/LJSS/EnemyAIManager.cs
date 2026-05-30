@@ -114,7 +114,7 @@ public class EnemyAIManager : MonoBehaviour
                     yield return new WaitForSeconds(0.5f);
                 }
             }
-            else if (bestEnemy.unitClass == Unit.UnitClass.Warrior)
+            else if (bestEnemy.unitClass == Unit.UnitClass.Warrior && bestEnemy.rootedTurns <= 0)
             {
                 if (enemyCellPos.x == targetCellPos.x || enemyCellPos.y == targetCellPos.y)
                 {
@@ -173,7 +173,7 @@ public class EnemyAIManager : MonoBehaviour
             bool hasMoved = false;
 
             // 이동 판단 (사거리 밖이고 이동력이 있을 때)
-            if (currentDistToTarget > bestEnemy.attackRange && bestEnemy.moveRange > 0)
+            if (currentDistToTarget > bestEnemy.attackRange && bestEnemy.moveRange > 0 && bestEnemy.rootedTurns <= 0)
             {
                 List<Vector3Int> reachableCells = GetReachableCells(bestEnemy);
                 Vector3Int bestMoveCell = enemyCellPos;

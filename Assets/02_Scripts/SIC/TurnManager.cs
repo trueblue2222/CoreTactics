@@ -125,6 +125,12 @@ public class TurnManager : MonoBehaviour
             }
         }
 
+        // slime 기믹 때문에 추가
+        if (TurnCount > 1 && GiantSlime.Instance != null)
+        {
+            GiantSlime.Instance.OnRoundPassed();
+        }
+
         // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
         ChangeState(GameState.PlayerUnitSelect);
     }

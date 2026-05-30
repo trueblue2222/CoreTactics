@@ -7,6 +7,12 @@ public class Warrior : Unit
 
     public override void OnSkillButtonPressed()
     {
+        if (rootedTurns > 0)
+        {
+            Debug.Log("점액으로 인해 돌진 스킬 사용 불가");
+            return;
+        }
+        
         Debug.Log("돌진할 방향의 타일을 클릭하세요.");
         BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkill;
         BattleManager.Instance.ClearHighlights();

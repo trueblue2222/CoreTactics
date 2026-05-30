@@ -234,6 +234,12 @@ public class BattleManager : MonoBehaviour
             Debug.Log("저격 모드 중에는 이동할 수 없습니다");
             return;
         }
+
+        if (activeUnit.rootedTurns > 0)
+        {
+            Debug.Log("점액으로 인해 움직일 수 없습니다.");
+            return;
+        }
         Debug.Log("이동할 타일을 클릭하세요");
         currentState = BattleState.SelectingMove;
         ShowMovableTiles(activeUnit);
@@ -288,6 +294,13 @@ public class BattleManager : MonoBehaviour
     void ShowMovableTiles(Unit unit)
     {
         ClearHighlights();
+
+        if (activeUnit != null && activeUnit.rootedTurns > 0)
+        {
+            Debug.Log("점액 때문에 발이 묶여 이번 턴에는 이동할 수 없습니다!");
+            // 필요하다면 화면에 "이동 불가!" 같은 UI 경고문을 띄워주면 좋습니다.
+            return; 
+        }
 
         Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
         int range = unit.moveRange;
