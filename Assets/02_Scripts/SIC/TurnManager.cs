@@ -201,6 +201,7 @@ public class TurnManager : MonoBehaviour
         // 1단계: 게임 상태 직렬화 (LLMBuildingGameData 상태에서 실행)
         string gameStateJson = GameStateSerializer.Instance.SerializeCurrentGameState();
         Debug.Log($"[TurnManager] 게임 상태 직렬화 완료 ({gameStateJson.Length} chars)");
+        // ※ BeginLLMTurn은 GeminiAPIManager.RequestRoutine 내부에서 호출됩니다.
         yield return null;
 
         // 2단계: LLM API 요청
@@ -220,6 +221,7 @@ public class TurnManager : MonoBehaviour
         if (requestFailed || string.IsNullOrEmpty(rawResponse))
         {
             Debug.LogWarning("[TurnManager] LLM 요청 실패 → Fallback AI 전환");
+            LLMLogger.Instance.LogResult(rawResponse, null, "API 요청 실패");
             ChangeState(GameState.LLMFallback);
             yield break;
         }
@@ -234,9 +236,12 @@ public class TurnManager : MonoBehaviour
         if (action == null)
         {
             Debug.LogWarning("[TurnManager] LLM 응답 검증 실패 → Fallback AI 전환");
+            LLMLogger.Instance.LogResult(rawResponse, null, "파싱·검증 실패");
             ChangeState(GameState.LLMFallback);
             yield break;
         }
+
+        LLMLogger.Instance.LogResult(rawResponse, action);
 
         // 5단계: 행동 실행
         ChangeState(GameState.EnemyActionExecute);

@@ -110,3 +110,8 @@ InitTestScene*.unity*
 # API key 적어두는 파일 (.env 역할)
 /[Aa]ssets/StreamingAssets/gemini_key.txt
 /[Aa]ssets/StreamingAssets/gemini_key.txt.meta
+
+# Client-LLM API 간 주고 받는 데이터 관련하여 해당 폴더에 로그 파일 쌓이게 하였습니다.
+# 각자 API 쓰시고 알아서 디버깅하시는 일이 많을테니, 로그 파일 공유할 일 있으면 그냥 카톡으로 하는 게 편할 거 같아서
+# 일단은 gitignore에 추가했습니다!
+/LLMLogs

@@ -89,22 +89,28 @@ public class GeminiAPIManager : MonoBehaviour
 
     private IEnumerator RequestRoutine(string gameStateJson, Action<string> onSuccess, Action onFailure)
     {
+        // 로그 세션의 턴 폴더를 여기서 생성 + gamestate 저장
+        // (PostRequest보다 반드시 먼저 호출되어야 _currentTurnPath가 세팅됨)
+        LLMLogger.Instance.BeginLLMTurn(gameStateJson);
+
         string userMsg =
             $"Current game state (JSON):\n{gameStateJson}\n\n" +
             "Choose the best action for ONE enemy unit this turn. " +
             "Respond with a single JSON object only — no explanation, no markdown.";
 
-        yield return StartCoroutine(PostRequest(userMsg, onSuccess, onFailure));
+        yield return StartCoroutine(PostRequest(userMsg, onSuccess, onFailure, logForSession: true));
     }
 
     // ─── HTTP POST 핵심 로직 (429 자동 재시도 포함) ─────────────────────
-    private IEnumerator PostRequest(string userMessage, Action<string> onSuccess, Action onFailure)
+    private IEnumerator PostRequest(string userMessage, Action<string> onSuccess, Action onFailure, bool logForSession = false)
     {
         string url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}";
 
         // Newtonsoft.Json으로 요청 본문 직렬화 — 특수문자 이스케이프 보장
         string bodyJson = BuildRequestJson(userMessage);
         byte[] bodyBytes = Encoding.UTF8.GetBytes(bodyJson);
+
+        if (logForSession) LLMLogger.Instance.LogAPIRequest(bodyJson);
 
         if (logSystemPrompt)
             Debug.Log($"[Gemini] ── System Prompt ──────────────────────\n{cachedSystemPrompt}\n────────────────────────────────────────────");
@@ -134,11 +140,13 @@ public class GeminiAPIManager : MonoBehaviour
                     string extracted = ExtractText(raw);
                     if (extracted != null)
                     {
+                        if (logForSession) LLMLogger.Instance.LogAPIResponse(raw, extracted);
                         Debug.Log($"[Gemini] 응답 수신: {extracted}");
                         onSuccess?.Invoke(extracted);
                     }
                     else
                     {
+                        if (logForSession) LLMLogger.Instance.LogAPIResponse(raw, null);
                         Debug.LogWarning($"[Gemini] text 추출 실패. 원본 응답:\n{raw}");
                         onFailure?.Invoke();
                     }

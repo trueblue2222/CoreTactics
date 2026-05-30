@@ -183,7 +183,7 @@ MonoBehaviour:
   temperature: 0.3
   maxOutputTokens: 8192
   thinkingBudget: 0
-  enableInitRequest: 0
+  enableInitRequest: 1
   maxRetries: 2
   retryDelaySec: 5
   logSystemPrompt: 0
