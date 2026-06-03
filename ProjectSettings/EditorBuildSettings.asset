@@ -8,4 +8,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/01_Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/01_Scenes/StartSceneTest.unity
+    guid: 6400bd8c80d6a2c4795bda33d02cac2a
+  - enabled: 1
+    path: Assets/01_Scenes/0516_LJSS_Slime.unity
+    guid: 974e9aa55adbc5447aff7c2b9eafcbc9
+  - enabled: 1
+    path: Assets/01_Scenes/0516_LJSS_BlackMage.unity
+    guid: 1072d48c8245a0c40aec1339363d06cf
   m_configObjects: {}

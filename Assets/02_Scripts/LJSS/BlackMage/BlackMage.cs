@@ -33,6 +33,15 @@ public class BlackMage : MonoBehaviour
 
     private List<GameObject> activePortals = new List<GameObject>();
 
+    // GameStateSerializer에서 LLM 데이터 빌드 시 사용
+    // roundCounter: 0→1→2(경고)→3(실행 후 0으로 리셋)
+    public int CooldownRemaining  => 3 - roundCounter;   // 다음 텔레포트까지 남은 라운드
+    public bool IsWarningPhase    => roundCounter == 2;  // 텔레포트 1라운드 전 경고 단계
+    public Unit WarnedPlayerUnit  => targetedPlayer;
+    public Unit WarnedEnemyUnit   => targetedEnemy;
+    public Vector3 PlayerTeleportDest => destPlayer;
+    public Vector3 EnemyTeleportDest  => destEnemy;
+
     void Awake()
     {
         Instance = this;

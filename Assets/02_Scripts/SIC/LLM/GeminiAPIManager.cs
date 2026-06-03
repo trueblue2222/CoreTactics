@@ -42,7 +42,22 @@ public class GeminiAPIManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         LoadApiKey();
+    }
+
+    void Start()
+    {
+        // 씬 이름으로 BigObject를 자동 감지합니다.
+        // 타이틀 화면 없이 게임 씬을 직접 실행해도 올바른 프롬프트가 생성됩니다.
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (sceneName.Contains("BlackMage"))
+            GameConfig.SelectedBigObject = GameConfig.BigObjectType.BlackMage;
+        else if (sceneName.Contains("Slime"))
+            GameConfig.SelectedBigObject = GameConfig.BigObjectType.GiantSlime;
+
         cachedSystemPrompt = BuildSystemPrompt();
+
+        if (logSystemPrompt)
+            Debug.Log($"[Gemini] 시스템 프롬프트 빌드 완료 (BigObject: {GameConfig.SelectedBigObject})");
     }
 
     private void LoadApiKey()
@@ -245,6 +260,9 @@ public class GeminiAPIManager : MonoBehaviour
 
     // ─── 시스템 프롬프트 ─────────────────────────────────────────────────
     private string BuildSystemPrompt() =>
+        BuildBasePrompt() + "\n\n" + BuildBigObjectRules();
+
+    private string BuildBasePrompt() =>
 "You are an AI enemy controller in a turn-based grid strategy game.\n" +
 "Your goal: destroy the PLAYER's Core (reduce its HP to 0). Protect your own Core.\n\n" +
 "=== UNIT CLASSES ===\n" +
@@ -256,6 +274,9 @@ public class GeminiAPIManager : MonoBehaviour
 "Magician : low HP, high ATK, attackRange=2, moveRange=2.\n" +
 "           Skill=Teleport (cooldown 3): move any unit to a new cell.\n" +
 "           Needs skillTargetId + skillDestination (empty cell).\n\n" +
+"=== UNIT STATE FIELDS ===\n" +
+"isRooted=true  : unit is trapped by slime — cannot move, Warrior cannot use Dash skill.\n" +
+"isSniperMode   : Archer is in sniper mode — cannot move but has extended attack range.\n\n" +
 "=== ACTIONS (pick exactly one) ===\n" +
 "move   : move to a cell in reachableCells → set moveTarget:{x,y}\n" +
 "attack : attack a target → set attackTargetId (MUST be from attackableTargetIds)\n" +
@@ -280,5 +301,54 @@ public class GeminiAPIManager : MonoBehaviour
 "- If attackableTargetIds is empty, do NOT use attack — choose move or skill instead.\n" +
 "- skill requires skillCooldown == 0.\n" +
 "- Warrior dashDestination: same row/column, within 4 cells, empty.\n" +
-"- Magician skillDestination: empty cell.";
+"- Magician skillDestination: empty cell.\n" +
+"- isRooted=true units: do NOT use move or Warrior skill — choose attack or skip instead.";
+
+    private string BuildBigObjectRules() =>
+        GameConfig.SelectedBigObject switch
+        {
+            GameConfig.BigObjectType.GiantSlime => BuildGiantSlimeRules(),
+            GameConfig.BigObjectType.BlackMage  => BuildBlackMageRules(),
+            _                                   => ""
+        };
+
+    private string BuildGiantSlimeRules() =>
+"=== MAP GIMMICK: GIANT SLIME ===\n" +
+"Every 3 rounds, the Giant Slime spawns SlimePuddles on 2 random empty tiles.\n\n" +
+"bigObject fields:\n" +
+"  type             = \"GiantSlime\"\n" +
+"  cooldownRemaining = rounds until next puddle spawn (3 → 2 → 1 → spawns → resets to 3)\n" +
+"  slimePuddles     = list of {x,y} positions with active slime on the map\n\n" +
+"SLIME RULES:\n" +
+"- A unit that moves onto a slimed tile becomes ROOTED (isRooted=true) for 1 turn.\n" +
+"- The puddle disappears after a unit steps on it.\n" +
+"- Rooted units: cannot move, Warrior cannot use Dash.\n" +
+"- Magician CAN teleport rooted units — skillTargetId may be a rooted unit.\n\n" +
+"STRATEGY vs SLIME:\n" +
+"- Check slimePuddles before choosing moveTarget — avoid slimed tiles for your own units.\n" +
+"- If a player unit is rooted (isRooted=true), prioritize attacking it (easy target).\n" +
+"- Use Magician Teleport to move an enemy unit that is rooted to a better position.\n" +
+"- Use Magician Teleport to drop a player unit onto a slimed tile intentionally.";
+
+    private string BuildBlackMageRules() =>
+"=== MAP GIMMICK: BLACK MAGE ===\n" +
+"Every 3 rounds, the Black Mage teleports one random unit from EACH team to a random tile.\n\n" +
+"bigObject fields:\n" +
+"  type              = \"BlackMage\"\n" +
+"  cooldownRemaining = rounds until next teleport (counts down 3 → 2 → 1 → 0 → teleports)\n" +
+"  isWarningPhase    = true when teleport happens NEXT round (cooldownRemaining=1)\n" +
+"  warnedEnemyUnitId  = ID of the enemy unit that WILL be teleported next round (warning only)\n" +
+"  warnedPlayerUnitId = ID of the player unit that WILL be teleported next round (warning only)\n" +
+"  enemyTeleportDest  = {x,y} where the warned enemy unit will land (warning only)\n" +
+"  playerTeleportDest = {x,y} where the warned player unit will land (warning only)\n\n" +
+"BLACK MAGE RULES:\n" +
+"- Teleport destinations are always empty, passable tiles — no choice in destination.\n" +
+"- Both teams are affected simultaneously; you cannot prevent it.\n" +
+"- Teleport ignores isRooted state — a rooted unit can still be teleported.\n\n" +
+"STRATEGY vs BLACK MAGE:\n" +
+"- When isWarningPhase=true: if warnedEnemyUnitId is a key attacker, delay committing it\n" +
+"  to a multi-step plan since its position will change next round.\n" +
+"- When isWarningPhase=true: if warnedPlayerUnitId is your current attack target,\n" +
+"  prioritize finishing it this round before it teleports away.\n" +
+"- cooldownRemaining=1 (warning) and cooldownRemaining=0 (imminent) both signal caution.";
 }

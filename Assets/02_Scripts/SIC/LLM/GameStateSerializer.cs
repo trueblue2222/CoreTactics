@@ -99,6 +99,8 @@ public class GameStateSerializer : MonoBehaviour
             });
         }
 
+        snapshot.bigObject = BuildBigObjectSnapshot();
+
         return JsonUtility.ToJson(snapshot);
     }
 
@@ -118,7 +120,8 @@ public class GameStateSerializer : MonoBehaviour
             moveRange = unit.moveRange,
             attackRange = unit.attackRange,
             skillCooldown = unit.skillCooldown,
-            isSniperMode = unit.isSniperMode
+            isSniperMode = unit.isSniperMode,
+            isRooted = unit.rootedTurns > 0
         };
 
         if (unit.team == "Enemy")
@@ -212,5 +215,48 @@ public class GameStateSerializer : MonoBehaviour
     {
         Vector3Int c = BattleManager.Instance.gridTilemap.WorldToCell(worldPos);
         return new CellPos(c.x, c.y);
+    }
+
+    // ─── BigObject 스냅샷 ─────────────────────────────────────────────────
+    private BigObjectSnapshot BuildBigObjectSnapshot()
+    {
+        if (GiantSlime.Instance != null && GiantSlime.Instance.gameObject.activeInHierarchy)
+        {
+            var snap = new BigObjectSnapshot
+            {
+                type = "GiantSlime",
+                cooldownRemaining = GiantSlime.Instance.CooldownRemaining,
+                slimePuddles = new List<CellPos>()
+            };
+            foreach (SlimePuddle puddle in FindObjectsOfType<SlimePuddle>())
+            {
+                if (puddle.gameObject.activeInHierarchy)
+                    snap.slimePuddles.Add(ToCell(puddle.transform.position));
+            }
+            return snap;
+        }
+
+        if (BlackMage.Instance != null && BlackMage.Instance.gameObject.activeInHierarchy)
+        {
+            var snap = new BigObjectSnapshot
+            {
+                type = "BlackMage",
+                cooldownRemaining = BlackMage.Instance.CooldownRemaining,
+                isWarningPhase = BlackMage.Instance.IsWarningPhase,
+                slimePuddles = new List<CellPos>(),
+                playerTeleportDest = new CellPos(),
+                enemyTeleportDest = new CellPos()
+            };
+            if (BlackMage.Instance.IsWarningPhase)
+            {
+                snap.warnedPlayerUnitId = GetUnitId(BlackMage.Instance.WarnedPlayerUnit);
+                snap.warnedEnemyUnitId  = GetUnitId(BlackMage.Instance.WarnedEnemyUnit);
+                snap.playerTeleportDest = ToCell(BlackMage.Instance.PlayerTeleportDest);
+                snap.enemyTeleportDest  = ToCell(BlackMage.Instance.EnemyTeleportDest);
+            }
+            return snap;
+        }
+
+        return new BigObjectSnapshot { type = "None", slimePuddles = new List<CellPos>(), playerTeleportDest = new CellPos(), enemyTeleportDest = new CellPos() };
     }
 }

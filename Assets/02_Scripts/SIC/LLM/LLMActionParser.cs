@@ -61,6 +61,9 @@ public class LLMActionParser : MonoBehaviour
     // ─── 이동 검증 ──────────────────────────────────────────────────────
     private EnemyActionData ValidateMove(EnemyActionData action, Unit unit)
     {
+        if (unit.rootedTurns > 0)
+            return LogAndReturn(null, $"[LLMParser] move: 점액 구속 중 (rootedTurns={unit.rootedTurns}) — 이동 불가");
+
         if (action.moveTarget == null)
             return LogAndReturn(null, "[LLMParser] move: moveTarget 누락");
 
@@ -109,6 +112,9 @@ public class LLMActionParser : MonoBehaviour
         switch (unit.unitClass)
         {
             case Unit.UnitClass.Warrior:
+                if (unit.rootedTurns > 0)
+                    return LogAndReturn(null, "[LLMParser] Warrior skill: 점액 구속 중 — 돌진 불가");
+
                 if (action.dashDestination == null)
                     return LogAndReturn(null, "[LLMParser] Warrior skill: dashDestination 누락");
 

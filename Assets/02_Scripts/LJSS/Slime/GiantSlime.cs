@@ -19,6 +19,9 @@ public class GiantSlime : MonoBehaviour
 
     private List<SlimePuddle> activePuddles = new List<SlimePuddle>();
 
+    // GameStateSerializer에서 LLM 데이터 빌드 시 사용
+    public int CooldownRemaining => currentCooldown;
+
     void Awake()
     {
         Instance = this;

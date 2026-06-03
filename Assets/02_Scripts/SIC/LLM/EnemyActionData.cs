@@ -36,6 +36,7 @@ public class GameStateSnapshot
     public CoreSnapshot playerCore;
     public CoreSnapshot enemyCore;
     public List<ObstacleSnapshot> obstacles;
+    public BigObjectSnapshot bigObject;
 }
 
 [Serializable]
@@ -53,8 +54,9 @@ public class UnitSnapshot
     public int attackRange;
     public int skillCooldown;
     public bool isSniperMode;
-    public List<CellPos> reachableCells;         // 적 유닛에만 포함: 이동 가능한 셀 목록
-    public List<string> attackableTargetIds;     // 적 유닛에만 포함: 지금 바로 공격 가능한 ID 목록
+    public bool isRooted;                         // rootedTurns > 0: 이동 불가, Warrior 돌진 불가
+    public List<CellPos> reachableCells;          // 적 유닛에만 포함: 이동 가능한 셀 목록
+    public List<string> attackableTargetIds;      // 적 유닛에만 포함: 지금 바로 공격 가능한 ID 목록
 }
 
 [Serializable]
@@ -72,4 +74,21 @@ public class ObstacleSnapshot
 {
     public CellPos position;
     public string type; // "Barricade" | "Spike"
+}
+
+[Serializable]
+public class BigObjectSnapshot
+{
+    public string type;           // "GiantSlime" | "BlackMage" | "None"
+    public int cooldownRemaining; // 다음 발동까지 남은 라운드 수
+
+    // GiantSlime 전용: 현재 맵에 존재하는 점액 위치 목록
+    public List<CellPos> slimePuddles;
+
+    // BlackMage 전용: 경고 단계(isWarningPhase=true)일 때만 유효
+    public bool isWarningPhase;
+    public string warnedPlayerUnitId;  // 다음 턴 텔레포트될 플레이어 유닛 ID
+    public string warnedEnemyUnitId;   // 다음 턴 텔레포트될 적 유닛 ID
+    public CellPos playerTeleportDest; // 해당 플레이어 유닛의 텔레포트 목적지
+    public CellPos enemyTeleportDest;  // 해당 적 유닛의 텔레포트 목적지
 }
