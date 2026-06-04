@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.VisualScripting;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -66,6 +67,13 @@ public class UIManager : MonoBehaviour
     [Header("Default")]
     public Sprite defaultPortraitSprite;
     private const string DEFAULT_STAT = "-";
+
+    [Header("Core Hp UI")]
+    public Slider playerCoreHpBar;
+    public Slider enemyCoreHpBar;
+
+    [Header("Game Over UI")]
+    public GameObject gameOverPanel;
 
 
     void Awake()
@@ -257,5 +265,33 @@ public class UIManager : MonoBehaviour
         if (attackButton != null) attackButton.interactable = interactable;
         if (skillButton != null) skillButton.interactable = interactable;
         if (cancelButton != null) cancelButton.interactable = interactable;
+    }
+
+    // Core HP
+    public void UpdateCoreHp(string team, int currentHp, int maxHp)
+    {
+        if (team == "Player" && playerCoreHpBar != null)
+        {
+            playerCoreHpBar.maxValue = maxHp;
+            playerCoreHpBar.value = currentHp;
+        }
+        else if (team == "Enemy" && enemyCoreHpBar != null)
+        {
+            enemyCoreHpBar.maxValue = maxHp;
+            enemyCoreHpBar.value = currentHp;
+        }
+    }
+
+    public void ShowGameOver(bool isVictory)
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+    }
+
+    public void GoToMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
 }

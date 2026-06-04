@@ -63,6 +63,8 @@ public class TurnManager : MonoBehaviour
             case GameState.EnemyTurnStart:      OnEnemyTurnStart(); break;
             case GameState.LLMBuildingGameData: StartCoroutine(LLMPipelineRoutine()); break;
             case GameState.LLMFallback:         EnemyAIManager.Instance.ExecuteFallbackAI(); break;
+            case GameState.Victory:             onGameOver(true); break;
+            case GameState.Defeat:              onGameOver(false); break;
         }
     }
 
@@ -262,5 +264,38 @@ public class TurnManager : MonoBehaviour
     public void SetInputBlocked(bool isBlocked)
     {
         IsInputBlocked = isBlocked;
+    }
+
+    // GameOver Case1 : Core break
+
+    private void onGameOver(bool isVictory)
+    {
+        UIManager.Instance.ShowGameOver(isVictory);
+    }
+
+    // GameOver Case2 : 유닛 사망
+
+    public void CheckUnitDeathWinCondition()
+    {
+        if (CurrentState == GameState.Victory || CurrentState == GameState.Defeat) return;
+
+        Unit[] allUnits = FindObjectsOfType<Unit>(true); // 비활성화된 유닛 포함 모든 유닛 찾기
+        
+        bool isPlayerAlive = false;
+        bool isEnemyAlive = false;
+
+        foreach (Unit unit in allUnits)
+        {
+            // hierarchy 상에서 활성화되어 있고 체력이 0보다 크다면 살아있는 것
+            if (unit.gameObject.activeInHierarchy && unit.currentHp > 0)
+            {
+                if (unit.team == "Player") isPlayerAlive = true;
+                if (unit.team == "Enemy") isEnemyAlive = true;
+            }
+        }
+
+        // 💡 조건 판정
+        if (!isPlayerAlive) ChangeState(GameState.Defeat); // 아군 전멸 -> 패배
+        else if (!isEnemyAlive) ChangeState(GameState.Victory); // 적군 전멸 -> 승리
     }
 }

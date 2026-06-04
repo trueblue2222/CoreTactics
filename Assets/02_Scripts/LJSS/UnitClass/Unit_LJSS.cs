@@ -36,10 +36,12 @@ public class Unit : MonoBehaviour
     public GameObject inspectedHighlight;
 
     private SpriteRenderer spriteRenderer;
+    protected Animator anim;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
     }
 
 
@@ -82,6 +84,8 @@ public class Unit : MonoBehaviour
     {
         Debug.Log($"[{team}] {unitClass} 사망");
         gameObject.SetActive(false);
+
+        TurnManager.Instance.CheckUnitDeathWinCondition();
     }
 
     public virtual void OnSkillButtonPressed()
@@ -138,6 +142,8 @@ public class Unit : MonoBehaviour
     {
         bool interceptedBySlime = false;
 
+        if (anim != null) anim.SetBool("Move", true);
+
         while (Vector3.Distance(transform.position, targetPos) > 0.01f)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
@@ -174,6 +180,8 @@ public class Unit : MonoBehaviour
             transform.position = targetPos;
         }
 
+        if (anim != null) anim.SetBool("Move", false);
+
         onMoveComplete?.Invoke();
     }
 
@@ -200,5 +208,15 @@ public class Unit : MonoBehaviour
         if (spriteRenderer == null) return;
 
         spriteRenderer.color = isRooted ? Color.green : Color.white;
+    }
+
+    public void TriggerAttackAnim()
+    {
+        if (anim != null) anim.SetTrigger("Attack");
+    }
+
+    public void TriggerSkillAnim()
+    {
+        if (anim != null) anim.SetTrigger("Skill");
     }
 }

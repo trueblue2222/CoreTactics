@@ -94,6 +94,8 @@ public class Warrior : Unit
         Vector3 targetWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cellPos);
         targetWorldPos.z = 0;
 
+        TriggerSkillAnim();
+
         StartCoroutine(MoveSmoothly(targetWorldPos, dashSpeed, () =>
         {
             Debug.Log("돌진 스킬 완료");

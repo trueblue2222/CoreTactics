@@ -177,6 +177,8 @@ public class BattleManager : MonoBehaviour
                         {
                             TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                             Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
+
+                            activeUnit.TriggerAttackAnim();
                             clickedUnit.TakeDamage(activeUnit.atk);
 
                             ClearHighlights();
@@ -187,6 +189,9 @@ public class BattleManager : MonoBehaviour
                         {
                             TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                             Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
+
+                            activeUnit.TriggerAttackAnim();
+                            
                             clickedCore.TakeDamage(activeUnit.atk);
 
                             ClearHighlights();
