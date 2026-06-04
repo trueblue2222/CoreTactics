@@ -1,0 +1,498 @@
+fileFormatVersion: 2
+guid: 5a4577e268c3ddd48a4efa48feff3f4a
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 110
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_2
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 1141
+        width: 7
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf7c71e630f71c74fb1e4a48600e97bb
+      internalID: -1764732271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_4
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 978
+        width: 140
+        height: 135
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd46d17c49230b14d84d144021c59fb1
+      internalID: -1127062938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_5
+      rect:
+        serializedVersion: 2
+        x: 257
+        y: 978
+        width: 133
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89b40065f26eebd41af30afddcc447ac
+      internalID: -2131417137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_6
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 978
+        width: 138
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a27c3fc3e170d874695ba52a446b0d53
+      internalID: 2128713110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_18
+      rect:
+        serializedVersion: 2
+        x: 948
+        y: 704
+        width: 115
+        height: 129
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71192741a76ffdc4cad1d4bd03d450ac
+      internalID: 490252365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_19
+      rect:
+        serializedVersion: 2
+        x: 1090
+        y: 702
+        width: 115
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12d62b34b1c7adf419ff155501e723a3
+      internalID: 927906547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_29
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 586
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b9f27eddc039f414a821aa9a8e4db6b8
+      internalID: -6955919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_32
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 580
+        width: 11
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de8a3e8d7734c874f960be25675d1207
+      internalID: -1237237805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_52
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 371
+        width: 6
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9b12a93d5f8815a45b009df77383a492
+      internalID: -1060128874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_80
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 123
+        width: 125
+        height: 139
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3d692e5f3f9fb5f46afd59c16cfe8dc3
+      internalID: -476177172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_81
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 123
+        width: 125
+        height: 139
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e21f659b341b3e24a9385190e11f89dd
+      internalID: -320484847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_84
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 119
+        width: 146
+        height: 145
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7befa646a6dd28740a93d81e9288e510
+      internalID: 1171326976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Magician_Animation3-Photoroom_85
+      rect:
+        serializedVersion: 2
+        x: 1021
+        y: 123
+        width: 130
+        height: 140
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f5c4e6e151d30ff40ad77727e441cfa3
+      internalID: -880500200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Magician_Animation3-Photoroom_0: 757394940
+      Magician_Animation3-Photoroom_1: -1973798655
+      Magician_Animation3-Photoroom_10: 1510072463
+      Magician_Animation3-Photoroom_100: -1117838177
+      Magician_Animation3-Photoroom_101: 935671216
+      Magician_Animation3-Photoroom_102: -300527955
+      Magician_Animation3-Photoroom_103: 150565316
+      Magician_Animation3-Photoroom_104: -289869245
+      Magician_Animation3-Photoroom_105: -926806311
+      Magician_Animation3-Photoroom_106: 1994505964
+      Magician_Animation3-Photoroom_107: -543973637
+      Magician_Animation3-Photoroom_108: 446099801
+      Magician_Animation3-Photoroom_109: 1310121580
+      Magician_Animation3-Photoroom_11: -1485350693
+      Magician_Animation3-Photoroom_110: -1905565127
+      Magician_Animation3-Photoroom_12: 698377944
+      Magician_Animation3-Photoroom_13: -2128836348
+      Magician_Animation3-Photoroom_14: 137897655
+      Magician_Animation3-Photoroom_15: 930453621
+      Magician_Animation3-Photoroom_16: 949375035
+      Magician_Animation3-Photoroom_17: -235640259
+      Magician_Animation3-Photoroom_18: 490252365
+      Magician_Animation3-Photoroom_19: 927906547
+      Magician_Animation3-Photoroom_2: -1764732271
+      Magician_Animation3-Photoroom_20: -1273820569
+      Magician_Animation3-Photoroom_21: 1866201155
+      Magician_Animation3-Photoroom_22: -541972814
+      Magician_Animation3-Photoroom_23: 2057985732
+      Magician_Animation3-Photoroom_24: 281180822
+      Magician_Animation3-Photoroom_25: -834557186
+      Magician_Animation3-Photoroom_26: 1709295809
+      Magician_Animation3-Photoroom_27: -154949511
+      Magician_Animation3-Photoroom_28: 1959842550
+      Magician_Animation3-Photoroom_29: -6955919
+      Magician_Animation3-Photoroom_3: -334829136
+      Magician_Animation3-Photoroom_30: 792231537
+      Magician_Animation3-Photoroom_31: -1276793002
+      Magician_Animation3-Photoroom_32: -1237237805
+      Magician_Animation3-Photoroom_33: -499274353
+      Magician_Animation3-Photoroom_34: 1306417533
+      Magician_Animation3-Photoroom_35: 1705515337
+      Magician_Animation3-Photoroom_36: 1455878959
+      Magician_Animation3-Photoroom_37: 1786506290
+      Magician_Animation3-Photoroom_38: 1478339930
+      Magician_Animation3-Photoroom_39: -1184777512
+      Magician_Animation3-Photoroom_4: -1127062938
+      Magician_Animation3-Photoroom_40: 720424922
+      Magician_Animation3-Photoroom_41: 195492960
+      Magician_Animation3-Photoroom_42: -740718793
+      Magician_Animation3-Photoroom_43: -1275329102
+      Magician_Animation3-Photoroom_44: -860796790
+      Magician_Animation3-Photoroom_45: 893575125
+      Magician_Animation3-Photoroom_46: 1501851023
+      Magician_Animation3-Photoroom_47: 575796242
+      Magician_Animation3-Photoroom_48: 1056567430
+      Magician_Animation3-Photoroom_49: -453298008
+      Magician_Animation3-Photoroom_5: -2131417137
+      Magician_Animation3-Photoroom_50: -1796991211
+      Magician_Animation3-Photoroom_51: -972804168
+      Magician_Animation3-Photoroom_52: -1060128874
+      Magician_Animation3-Photoroom_53: -1807281963
+      Magician_Animation3-Photoroom_54: 268404804
+      Magician_Animation3-Photoroom_55: 1880535456
+      Magician_Animation3-Photoroom_56: -469116730
+      Magician_Animation3-Photoroom_57: 1627677286
+      Magician_Animation3-Photoroom_58: 185059454
+      Magician_Animation3-Photoroom_59: -1208760928
+      Magician_Animation3-Photoroom_6: 2128713110
+      Magician_Animation3-Photoroom_60: -2141868664
+      Magician_Animation3-Photoroom_61: -1875613740
+      Magician_Animation3-Photoroom_62: 161849311
+      Magician_Animation3-Photoroom_63: -166962076
+      Magician_Animation3-Photoroom_64: 1229471902
+      Magician_Animation3-Photoroom_65: -1588546234
+      Magician_Animation3-Photoroom_66: -247221075
+      Magician_Animation3-Photoroom_67: 159279956
+      Magician_Animation3-Photoroom_68: -1876464693
+      Magician_Animation3-Photoroom_69: -1588036658
+      Magician_Animation3-Photoroom_7: -1496767138
+      Magician_Animation3-Photoroom_70: -1065456327
+      Magician_Animation3-Photoroom_71: 1512730425
+      Magician_Animation3-Photoroom_72: -432300601
+      Magician_Animation3-Photoroom_73: -1818128297
+      Magician_Animation3-Photoroom_74: -1433744041
+      Magician_Animation3-Photoroom_75: -1237268419
+      Magician_Animation3-Photoroom_76: 1020493516
+      Magician_Animation3-Photoroom_77: -310388809
+      Magician_Animation3-Photoroom_78: -1678694514
+      Magician_Animation3-Photoroom_79: 1514258141
+      Magician_Animation3-Photoroom_8: -1157249082
+      Magician_Animation3-Photoroom_80: -476177172
+      Magician_Animation3-Photoroom_81: -320484847
+      Magician_Animation3-Photoroom_82: 448037510
+      Magician_Animation3-Photoroom_83: 1992588740
+      Magician_Animation3-Photoroom_84: 1171326976
+      Magician_Animation3-Photoroom_85: -880500200
+      Magician_Animation3-Photoroom_86: -869375075
+      Magician_Animation3-Photoroom_87: -33326472
+      Magician_Animation3-Photoroom_88: -1945889635
+      Magician_Animation3-Photoroom_89: 1424184628
+      Magician_Animation3-Photoroom_9: 1870706617
+      Magician_Animation3-Photoroom_90: 1198170045
+      Magician_Animation3-Photoroom_91: -1559931648
+      Magician_Animation3-Photoroom_92: -2082336803
+      Magician_Animation3-Photoroom_93: -651003180
+      Magician_Animation3-Photoroom_94: 360058211
+      Magician_Animation3-Photoroom_95: 799991955
+      Magician_Animation3-Photoroom_96: -670780941
+      Magician_Animation3-Photoroom_97: 2084982261
+      Magician_Animation3-Photoroom_98: -24968773
+      Magician_Animation3-Photoroom_99: 1620435972
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

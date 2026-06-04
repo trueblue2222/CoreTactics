@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7626605190120373699}
   - component: {fileID: 3534137861404777027}
   - component: {fileID: 8291586124093826663}
+  - component: {fileID: 8373010674411387702}
   m_Layer: 0
   m_Name: Player_Magician
   m_TagString: Untagged
@@ -155,10 +156,32 @@ MonoBehaviour:
   skillCooldown: 0
   isSniperMode: 0
   sniperModeTurnsLeft: 0
+  rootedTurns: 0
   moveSpeed: 2
   hitFlashDuration: 0.3
   activeHighlight: {fileID: 4833183044497524020}
   inspectedHighlight: {fileID: 0}
+--- !u!95 &8373010674411387702
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139630588303979144}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: cc2a0d4f22acae249b656f4b4d753c1f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &5495822809346517441
 PrefabInstance:
   m_ObjectHideFlags: 0

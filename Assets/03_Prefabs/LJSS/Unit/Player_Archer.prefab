@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2256716823608587202}
   - component: {fileID: 2148886560048250780}
   - component: {fileID: 9052829598839731319}
+  - component: {fileID: 605489676684488594}
   m_Layer: 0
   m_Name: Player_Archer
   m_TagString: Untagged
@@ -76,7 +77,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 21300000, guid: b53e8b38a5bd11841ab140332bf68e91, type: 3}
+  m_Sprite: {fileID: -1127062938, guid: 5a4577e268c3ddd48a4efa48feff3f4a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,7 +124,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.76, y: 1.76}
+    oldSize: {x: 1.2727273, y: 1.2272727}
     newSize: {x: 2, y: 2.02}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -155,10 +156,32 @@ MonoBehaviour:
   skillCooldown: 0
   isSniperMode: 0
   sniperModeTurnsLeft: 0
+  rootedTurns: 0
   moveSpeed: 2
   hitFlashDuration: 0.3
   activeHighlight: {fileID: 8140508306513135223}
   inspectedHighlight: {fileID: 0}
+--- !u!95 &605489676684488594
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 453567381321280220}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 5e92cd8f3191d124c98833e8ebbf18c0, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &9200602016797485698
 PrefabInstance:
   m_ObjectHideFlags: 0

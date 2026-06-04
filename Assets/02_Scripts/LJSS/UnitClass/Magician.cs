@@ -92,6 +92,8 @@ public class Magician : Unit
         BattleManager.Instance.ClearHighlights();
         BattleManager.Instance.currentState = BattleManager.BattleState.Idle;
 
+        TriggerSkillAnim();
+
         skillCooldown = 3; // 마법사 쿨타임
 
         Unit targetToMove = BattleManager.Instance.skillTargetUnit;
