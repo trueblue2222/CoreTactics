@@ -257,7 +257,11 @@ public class EnemyAIManager : MonoBehaviour
                         {
                             if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null) canLand = false;
                             Obstacle obs = hit.GetComponent<Obstacle>();
-                            if (obs != null && !obs.IsPassable()) canLand = false;
+                            if (obs != null) 
+                            {
+                                if (!obs.IsPassable())  canLand = false;
+                                if (obs.obstacleType == Obstacle.ObstacleType.Spike) canLand = false;
+                            }
                         }
 
                         // 착지 지점이 완벽한 빈칸일 때만 돌진 발동!
@@ -401,7 +405,13 @@ public class EnemyAIManager : MonoBehaviour
                 foreach (Collider2D hit in hits)
                 {
                     Obstacle obstacle = hit.GetComponent<Obstacle>();
-                    if (obstacle != null && !obstacle.IsPassable()) isPassable = false;
+                    if (obstacle != null)
+                    {
+                        if (!obstacle.IsPassable()) isPassable = false;
+                        
+                        // 💡 통과는 가능하지만, 가시 함정(Spike)이라면 이동 경로에서 제외합니다!
+                        if (obstacle.obstacleType == Obstacle.ObstacleType.Spike) isPassable = false;
+                    }
 
                     if (hit.GetComponent<Unit>() != null) isPassable = false;
                     if (hit.GetComponent<Core>() != null) isPassable = false;

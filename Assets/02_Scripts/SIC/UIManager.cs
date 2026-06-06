@@ -74,6 +74,8 @@ public class UIManager : MonoBehaviour
 
     [Header("Game Over UI")]
     public GameObject gameOverPanel;
+    public GameObject victoryImage; // 플레이어 승리 이미지
+    public GameObject defeatImage;  // 적 승리(Game Over) 이미지
 
 
     void Awake()
@@ -287,7 +289,24 @@ public class UIManager : MonoBehaviour
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
+
+            // 💡 [추가] 승패 결과에 따라 알맞은 이미지만 켜고 끕니다.
+            if (victoryImage != null) victoryImage.SetActive(isVictory);
+            if (defeatImage != null) defeatImage.SetActive(!isVictory);
         }
+    }
+
+    // 💡 [추가] Restart 버튼 클릭 시 실행될 함수
+    public void RestartGame()
+    {
+        // 0 또는 1을 랜덤으로 뽑습니다. (Random.Range에서 정수 사용 시 최댓값은 포함되지 않음)
+        int randomSceneIndex = UnityEngine.Random.Range(0, 2);
+        
+        // 0이면 BlackMagician, 1이면 Slime 씬을 선택합니다.
+        string sceneToLoad = (randomSceneIndex == 0) ? "0516_LJSS_Black" : "0516_LJSS_Slime";
+        
+        Debug.Log($"[UIManager] 랜덤 씬 로드: {sceneToLoad}");
+        SceneManager.LoadScene(sceneToLoad);
     }
 
     public void GoToMainMenu()
