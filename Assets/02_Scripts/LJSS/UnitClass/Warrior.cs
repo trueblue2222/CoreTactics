@@ -75,9 +75,28 @@ public class Warrior : Unit
             Vector3Int pathCell = new Vector3Int(startCell.x + (dir.x * i), startCell.y + (dir.y * i), 0);
             Vector3 pathWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(pathCell);
 
-            // 경로상에 있는 모든 유닛/코어에게 대미지를 주기 위해 OverlapPointAll 사용
             Collider2D[] hitsTarget = Physics2D.OverlapPointAll(pathWorldPos);
+            
+            // 💡 [핵심 추가] 데미지를 주기 전에, 이 칸에 바리케이드가 있는지 먼저 확인합니다.
+            bool hitBarricade = false;
+            foreach (Collider2D hitTarget in hitsTarget)
+            {
+                Obstacle obs = hitTarget.GetComponent<Obstacle>();
+                if (obs != null && !obs.IsPassable())
+                {
+                    hitBarricade = true;
+                    break;
+                }
+            }
 
+            // 🛑 바리케이드가 막고 있다면? 즉시 for문을 탈출(break)하여 뒤쪽 경로의 적을 보호합니다!
+            if (hitBarricade)
+            {
+                Debug.Log("경로 상에 바리케이드가 있어 그 너머로는 데미지가 들어가지 않습니다!");
+                break; 
+            }
+
+            // 바리케이드가 없는 안전한 칸이라면 정상적으로 데미지를 줍니다.
             foreach (Collider2D hitTarget in hitsTarget)
             {
                 Unit targetUnit = hitTarget.GetComponent<Unit>();
@@ -85,7 +104,15 @@ public class Warrior : Unit
 
                 Core targetCore = hitTarget.GetComponent<Core>();
                 if (targetCore != null && targetCore.team != team) targetCore.TakeDamage(20);
+
+                Obstacle targetObs = hitTarget.GetComponent<Obstacle>();
+                if (targetObs != null && targetObs.obstacleType == Obstacle.ObstacleType.Bomb) 
+                {
+                    targetObs.TriggerBomb();
+                }
             }
+
+            
         }
 
         BattleManager.Instance.ClearHighlights();
@@ -98,7 +125,9 @@ public class Warrior : Unit
 
         StartCoroutine(MoveSmoothly(targetWorldPos, dashSpeed, () =>
         {
-            Debug.Log("돌진 스킬 완료");
+            Debug.Log("전사 돌진 이동 완료!");
+
+            // 💡 도착 후 쿨타임 적용 및 턴 종료만 깔끔하게 실행합니다.
             skillCooldown = 2; // 전사 쿨타임
 
             if (TurnManager.Instance.IsPlayerTurn)

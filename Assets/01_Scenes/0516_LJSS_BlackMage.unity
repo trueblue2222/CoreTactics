@@ -472,6 +472,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   obstacleType: 0
   trapDamage: 0
+  bombEffectPrefab: {fileID: 0}
+  explosionDamage: 30
+  explosionRange: 2
 --- !u!212 &172735834
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1592,8 +1595,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 189.6, y: 83.2}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 221.278, y: 83.2}
+  m_SizeDelta: {x: 263.355, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &518644241
 MonoBehaviour:
@@ -1916,6 +1919,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   obstacleType: 0
   trapDamage: 0
+  bombEffectPrefab: {fileID: 0}
+  explosionDamage: 30
+  explosionRange: 2
 --- !u!212 &653985309
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3438,6 +3444,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   obstacleType: 0
   trapDamage: 0
+  bombEffectPrefab: {fileID: 0}
+  explosionDamage: 30
+  explosionRange: 2
 --- !u!212 &1233706189
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3922,6 +3931,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   obstacleType: 0
   trapDamage: 0
+  bombEffectPrefab: {fileID: 0}
+  explosionDamage: 30
+  explosionRange: 2
 --- !u!212 &1480707434
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -4203,8 +4215,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 189.6, y: 83.2}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 213.04791, y: 83.20001}
+  m_SizeDelta: {x: 246.896, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1684933542
 MonoBehaviour:
@@ -5234,6 +5246,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2a6b748869d5d041abc454b3d136a2a, type: 3}
+--- !u!1001 &8497856106541418312
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193892905679075672, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8931798190099875888, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
+      propertyPath: m_Name
+      value: Bomb
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 45347e82aa419104a9370fea8cfe192e, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -5258,3 +5327,4 @@ SceneRoots:
   - {fileID: 1975965909}
   - {fileID: 65786108}
   - {fileID: 398642667036004455}
+  - {fileID: 8497856106541418312}

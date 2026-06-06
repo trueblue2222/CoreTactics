@@ -28,6 +28,22 @@ public class Magician : Unit
 
     public override void OnSkillTargetClicked(Vector3Int cellPos, Unit clickedUnit, Core clickedCore)
     {
+        Vector3 worldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cellPos);
+        worldPos.z = 0;
+
+        // 💡 [추가] 클릭한 위치에 폭탄이 있는지 검사합니다.
+        Obstacle clickedBomb = null;
+        Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
+        foreach (Collider2D hit in hits)
+        {
+            Obstacle obs = hit.GetComponent<Obstacle>();
+            if (obs != null && obs.obstacleType == Obstacle.ObstacleType.Bomb)
+            {
+                clickedBomb = obs;
+                break;
+            }
+        }
+
         if (clickedUnit != null)
         {
             Debug.Log($"대상 유닛 {clickedUnit.unitClass} 선택");
@@ -35,6 +51,19 @@ public class Magician : Unit
             BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkillDestination;
             ShowDestinationTiles(clickedUnit);
         }
+        else if (clickedBomb != null)
+        {
+            BattleManager.Instance.skillTargetObstacle = clickedBomb;
+            BattleManager.Instance.skillTargetUnit = null; // 유닛 비우기
+        }
+        else
+        {
+            Debug.Log("스킬 대상(유닛 또는 폭탄)이 없습니다.");
+            return; // 아무것도 없으면 취소
+        }
+
+        Debug.Log("이동시킬 목적지를 클릭하세요.");
+        BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkillDestination;
     }
 
     private void ShowDestinationTiles(Unit targetUnit)
@@ -96,15 +125,32 @@ public class Magician : Unit
 
         skillCooldown = 3; // 마법사 쿨타임
 
-        Unit targetToMove = BattleManager.Instance.skillTargetUnit;
-        TeleportTargetUnit(targetToMove, targetWorldPos, () =>
+        Unit targetUnit = BattleManager.Instance.skillTargetUnit;
+        Obstacle targetBomb = BattleManager.Instance.skillTargetObstacle;
+
+        if (targetUnit != null)
         {
-            Debug.Log("마법사 공간 이동 스킬 완료 (순간이동)");
-            BattleManager.Instance.skillTargetUnit = null;
+            TeleportTargetUnit(targetUnit, targetWorldPos, () => 
+            {
+                Debug.Log("마법사 유닛 공간 이동 완료");
+                BattleManager.Instance.skillTargetUnit = null;
+
+                if (TurnManager.Instance.IsPlayerTurn)
+                    TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+            });
+        }
+        else if (targetBomb != null)
+        {
+            // 폭탄은 유닛이 아니므로 점액(Slime)이나 가시 함정(Spike)의 효과를 받지 않습니다.
+            // 따라서 복잡한 함수를 거칠 필요 없이 위치만 즉시 변경해 주면 완벽합니다!
+            targetBomb.transform.position = targetWorldPos;
+            
+            Debug.Log("마법사 폭탄 텔레포트 완료!");
+            BattleManager.Instance.skillTargetObstacle = null;
 
             if (TurnManager.Instance.IsPlayerTurn)
                 TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
-        });
+        }
     }
 
     private void TeleportTargetUnit(Unit target, Vector3 targetPos, System.Action onComplete)
@@ -121,6 +167,12 @@ public class Magician : Unit
             {
                 // 나(this)가 아니라, 내가 던진 대상(target)에게 디버프를 걸라고 지시해야 합니다!
                 puddle.ApplyDebuff(target); 
+            }
+
+            Obstacle obstacle = hit.GetComponent<Obstacle>();
+            if (obstacle != null)
+            {
+                obstacle.OnUnitStepped(target);
             }
         }
 

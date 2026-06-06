@@ -31,6 +31,7 @@ public class BattleManager : MonoBehaviour
     public Unit activeUnit;
     public Unit inspectedUnit;
     public Unit skillTargetUnit;
+    public Obstacle skillTargetObstacle;
 
     [Header("Movement Highlights")]
     public GameObject moveHighlightPrefab;
@@ -94,7 +95,7 @@ public class BattleManager : MonoBehaviour
             activeUnit = null;
             inspectedUnit = null;
             skillTargetUnit = null;
-
+            skillTargetObstacle = null;
             UIManager.Instance.ClearActiveUnitUI();
             UIManager.Instance.ClearInspectedUnitUI();
         }
@@ -106,6 +107,8 @@ public class BattleManager : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
         Unit clickedUnit = hit.collider != null ? hit.collider.GetComponent<Unit>() : null;
         Core clickedCore = hit.collider != null ? hit.collider.GetComponent<Core>() : null;
+
+        Obstacle clickedObstacle = hit.collider != null ? hit.collider.GetComponent<Obstacle>() : null;
 
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
@@ -193,6 +196,20 @@ public class BattleManager : MonoBehaviour
                             activeUnit.TriggerAttackAnim();
                             
                             clickedCore.TakeDamage(activeUnit.atk);
+
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }
+                        else if (clickedObstacle != null && clickedObstacle.obstacleType == Obstacle.ObstacleType.Bomb)
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"{activeUnit.unitClass}가 폭탄을 타격하여 기폭시켰습니다!");
+
+                            activeUnit.TriggerAttackAnim();
+                            
+                            // 폭탄 점화 함수 실행
+                            clickedObstacle.TriggerBomb(); 
 
                             ClearHighlights();
                             currentState = BattleState.Idle;
@@ -386,6 +403,7 @@ public class BattleManager : MonoBehaviour
         ClearHighlights();
         currentState = BattleState.Idle;
         skillTargetUnit = null;
+        skillTargetObstacle = null;
 
         TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
     }

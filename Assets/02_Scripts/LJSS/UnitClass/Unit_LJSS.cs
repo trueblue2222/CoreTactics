@@ -53,8 +53,15 @@ public class Unit : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        currentHp -= damage;
-        Debug.Log($"[{team}] {unitClass} 피격, 남은 체력: {currentHp}");
+        int actualDamage = Mathf.Max(1, damage - def); 
+        
+        // (만약 방어력이 더 높을 때 데미지를 아예 0으로 만들고 싶으시다면 아래 코드를 쓰시면 됩니다)
+        // int actualDamage = Mathf.Max(0, damage - def);
+
+        currentHp -= actualDamage; // 계산된 실제 데미지만큼만 체력 감소
+        
+        // 로그도 상세하게 출력하여 방어력이 잘 적용되었는지 확인하기 쉽게 바꿉니다.
+        Debug.Log($"[{team}] {unitClass} 피격! (원래 피해: {damage}, 방어력: {def}) ➡️ 실제 받은 피해: {actualDamage}, 남은 체력: {currentHp}");
 
         if (BattleManager.Instance.activeUnit == this)
             UIManager.Instance.UpdateActiveUnitUI(this);
@@ -140,7 +147,9 @@ public class Unit : MonoBehaviour
 
     public IEnumerator MoveSmoothly(Vector3 targetPos, float speed, Action onMoveComplete)
     {
-        bool interceptedBySlime = false;
+        bool intercepted = false;
+
+        Vector3Int previousCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
 
         if (anim != null) anim.SetBool("Move", true);
 
@@ -148,17 +157,37 @@ public class Unit : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
 
+            Vector3Int currentCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
+
             Collider2D[] hits = Physics2D.OverlapPointAll(transform.position);
             SlimePuddle puddleFound = null;
+            bool hitBarricade = false;
 
             foreach (Collider2D hit in hits)
             {
+                Obstacle obs = hit.GetComponent<Obstacle>();
+                if (obs != null && !obs.IsPassable())
+                {
+                    hitBarricade = true;
+                    break;
+                }
+
                 SlimePuddle puddle = hit.GetComponent<SlimePuddle>();
                 if (puddle != null)
                 {
                     puddleFound = puddle;
                     break;
                 }
+            }
+
+            if (hitBarricade)
+            {
+                Vector3 stopPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(previousCell);
+                stopPos.z = 0;
+                transform.position = stopPos;
+
+                intercepted = true;
+                break;
             }
 
             if (puddleFound != null)
@@ -169,15 +198,25 @@ public class Unit : MonoBehaviour
 
                 puddleFound.ApplyDebuff(this);
 
-                interceptedBySlime = true;
+                intercepted = true;
                 break;
             }
             yield return null;
         }
 
-        if (!interceptedBySlime)
+        if (!intercepted)
         {
             transform.position = targetPos;
+        }
+
+        Collider2D[] finalHits = Physics2D.OverlapPointAll(transform.position);
+        foreach (Collider2D hit in finalHits)
+        {
+            Obstacle obstacle = hit.GetComponent<Obstacle>();
+            if (obstacle != null)
+            {
+                obstacle.OnUnitStepped(this);
+            }
         }
 
         if (anim != null) anim.SetBool("Move", false);
