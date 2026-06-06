@@ -313,6 +313,18 @@ public class BattleManager : MonoBehaviour
         activeUnit.OnSkillButtonPressed();
     }
 
+    public void OnSecondSkillButtonClicked()
+    {
+        if (activeUnit == null) return;
+        if (activeUnit.skillCooldown > 0)
+        {
+            Debug.Log($"{activeUnit.unitClass} 2차 스킬 쿨타임 대기중 ({activeUnit.skillCooldown}턴 남음)");
+            return;
+        }
+
+        activeUnit.OnSecondSkillButtonPressed();
+    }
+
     void ShowMovableTiles(Unit unit)
     {
         ClearHighlights();

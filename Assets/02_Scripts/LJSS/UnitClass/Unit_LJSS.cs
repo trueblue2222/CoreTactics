@@ -27,6 +27,8 @@ public class Unit : MonoBehaviour
     public int sniperModeTurnsLeft = 0;
     public int rootedTurns = 0; // 점액 구속 상태 (0이면 정상, 1 이상 이면 이동 불가)
 
+    public GameObject buffEffectObj;
+
     [Header("Animation Setting")]
     public float moveSpeed = 2f;
     [SerializeField] private float hitFlashDuration = 0.3f;
@@ -63,6 +65,8 @@ public class Unit : MonoBehaviour
         // 로그도 상세하게 출력하여 방어력이 잘 적용되었는지 확인하기 쉽게 바꿉니다.
         Debug.Log($"[{team}] {unitClass} 피격! (원래 피해: {damage}, 방어력: {def}) ➡️ 실제 받은 피해: {actualDamage}, 남은 체력: {currentHp}");
 
+        TriggerAttackedAnim();
+
         if (BattleManager.Instance.activeUnit == this)
             UIManager.Instance.UpdateActiveUnitUI(this);
         else if (BattleManager.Instance.inspectedUnit == this)
@@ -96,6 +100,11 @@ public class Unit : MonoBehaviour
     }
 
     public virtual void OnSkillButtonPressed()
+    {
+        Debug.Log("기본 유닛은 스킬이 없습니다.");
+    }
+
+    public virtual void OnSecondSkillButtonPressed()
     {
         Debug.Log("기본 유닛은 스킬이 없습니다.");
     }
@@ -136,6 +145,8 @@ public class Unit : MonoBehaviour
                 attackRange -= 1;
                 moveRange = 2;
                 skillCooldown = 2;
+
+                if (buffEffectObj != null) buffEffectObj.SetActive(false);
             }
         }
     }
@@ -249,13 +260,25 @@ public class Unit : MonoBehaviour
         spriteRenderer.color = isRooted ? Color.green : Color.white;
     }
 
-    public void TriggerAttackAnim()
+    public virtual void TriggerAttackAnim()
     {
         if (anim != null) anim.SetTrigger("Attack");
     }
 
-    public void TriggerSkillAnim()
+    public virtual void TriggerSkillAnim() // 1스킬
     {
         if (anim != null) anim.SetTrigger("Skill");
+    }
+
+    // 💡 [새로 추가] 2스킬 애니메이션
+    public virtual void TriggerSecondSkillAnim() 
+    {
+        if (anim != null) anim.SetTrigger("Skill2");
+    }
+
+    // 💡 [새로 추가] 피격 애니메이션
+    public virtual void TriggerAttackedAnim()
+    {
+        if (anim != null) anim.SetTrigger("Attacked"); 
     }
 }

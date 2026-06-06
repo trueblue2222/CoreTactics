@@ -5,6 +5,10 @@ public class Warrior : Unit
     [Header("Dash Skill")]
     public float dashSpeed = 10f;
 
+    [Header("Second Skill (AoE)")]
+    public GameObject swordEruptionPrefab; // 💡 솟아오르는 대검 스프라이트 프리팹
+    public int aoeDamage = 20;             // 광역기 데미지
+
     public override void OnSkillButtonPressed()
     {
         if (rootedTurns > 0)
@@ -52,6 +56,74 @@ public class Warrior : Unit
                     BattleManager.Instance.SpawnHighlight(nextCell);
                 }
             }
+        }
+    }
+
+    public override void OnSecondSkillButtonPressed()
+    {
+        if (rootedTurns > 0)
+        {
+            Debug.Log("점액으로 인해 스킬 사용 불가");
+            return;
+        }
+
+        Debug.Log("전사: 주변 1칸 범위에 대검 소환!");
+        TriggerSecondSkillAnim(); 
+        // 내 유닛이 서 있는 현재 타일 위치
+        Vector3Int centerCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
+
+        // x는 -1부터 1까지, y도 -1부터 1까지 반복 (총 9칸 3x3 스캔)
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                if (x == 0 && y == 0) continue;
+                
+                Vector3Int targetCell = centerCell + new Vector3Int(x, y, 0);
+                Vector3 targetWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(targetCell);
+                targetWorldPos.z = 0;
+
+                // 1. 해당 칸에 대검 이펙트 생성 (이전에 폭탄에서 썼던 1초 뒤 자동 삭제 기법 적용)
+                if (swordEruptionPrefab != null)
+                {
+                    GameObject swordEffect = Instantiate(swordEruptionPrefab, targetWorldPos, Quaternion.identity);
+                    Destroy(swordEffect, 1f); 
+                }
+
+                // 2. 해당 칸에 있는 대상 타격 판정
+                Collider2D[] hits = Physics2D.OverlapPointAll(targetWorldPos);
+                foreach (Collider2D hit in hits)
+                {
+                    Unit targetUnit = hit.GetComponent<Unit>();
+                    
+                    // 본인(this)은 맞지 않게 제외하고, 적군일 때만 데미지를 입힙니다.
+                    if (targetUnit != null && targetUnit != this && targetUnit.team != this.team)
+                    {
+                        targetUnit.TakeDamage(aoeDamage);
+                    }
+
+                    Core targetCore = hit.GetComponent<Core>();
+                    if (targetCore != null && targetCore.team != this.team)
+                    {
+                        targetCore.TakeDamage(aoeDamage);
+                    }
+
+                    // (선택) 주변에 폭탄이 있다면 덤으로 기폭시킵니다!
+                    Obstacle targetObs = hit.GetComponent<Obstacle>();
+                    if (targetObs != null && targetObs.obstacleType == Obstacle.ObstacleType.Bomb)
+                    {
+                        targetObs.TriggerBomb();
+                    }
+                }
+            }
+        }
+
+        // 스킬 쿨타임 및 턴 종료 처리 (광역기는 성능이 좋으니 쿨타임을 3으로 예시 설정했습니다)
+        skillCooldown = 3; 
+
+        if (TurnManager.Instance.IsPlayerTurn)
+        {
+            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
         }
     }
 

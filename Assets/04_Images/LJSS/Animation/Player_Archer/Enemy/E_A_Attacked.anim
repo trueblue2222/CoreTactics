@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Magician_Idle
+  m_Name: E_A_Attacked
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -21,9 +21,9 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 1725533272, guid: 8e8c6872cb84d184cb27b624a7121090, type: 3}
+      value: {fileID: 683100746, guid: 52b7d344cc4b7d9419032504e5147ddd, type: 3}
     - time: 0.083333336
-      value: {fileID: -17772875, guid: 8e8c6872cb84d184cb27b624a7121090, type: 3}
+      value: {fileID: -124800124, guid: 52b7d344cc4b7d9419032504e5147ddd, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
@@ -46,8 +46,8 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: 1725533272, guid: 8e8c6872cb84d184cb27b624a7121090, type: 3}
-    - {fileID: -17772875, guid: 8e8c6872cb84d184cb27b624a7121090, type: 3}
+    - {fileID: 683100746, guid: 52b7d344cc4b7d9419032504e5147ddd, type: 3}
+    - {fileID: -124800124, guid: 52b7d344cc4b7d9419032504e5147ddd, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}

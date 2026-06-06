@@ -151,16 +151,19 @@ MonoBehaviour:
   currentHp: 0
   atk: 10
   def: 5
-  moveRange: 3
+  moveRange: 2
   attackRange: 3
   skillCooldown: 0
   isSniperMode: 0
   sniperModeTurnsLeft: 0
   rootedTurns: 0
+  buffEffectObj: {fileID: 0}
   moveSpeed: 2
   hitFlashDuration: 0.3
   activeHighlight: {fileID: 4833183044497524020}
   inspectedHighlight: {fileID: 0}
+  lightningEffectPrefab: {fileID: 9088440350543923932, guid: 8c6be193d7a946c4f94bf3816c329b7e, type: 3}
+  lightningDamage: 20
 --- !u!95 &8373010674411387702
 Animator:
   serializedVersion: 5

@@ -105,20 +105,136 @@ public class EnemyAIManager : MonoBehaviour
         // --- 스킬 사용 판단 ---
         if (bestEnemy.skillCooldown <= 0)
         {
-            if (bestEnemy.unitClass == Unit.UnitClass.Archer && !bestEnemy.isSniperMode)
+            // 타겟과의 가로, 세로 거리를 각각 구합니다 (광역기 사거리 계산용)
+            int distX = Mathf.Abs(enemyCellPos.x - targetCellPos.x);
+            int distY = Mathf.Abs(enemyCellPos.y - targetCellPos.y);
+
+            // 스킬 타겟팅에 넘겨줄 유닛과 코어 정보를 미리 가져옵니다.
+            Unit targetUnit = bestTarget.GetComponent<Unit>();
+            Core targetCore = bestTarget.GetComponent<Core>();
+
+            // 🏹 1. 궁수(Archer) 스킬 판단
+            if (bestEnemy.unitClass == Unit.UnitClass.Archer)
             {
-                if (globalMinDistance == 5)
+                // 2스킬 (화살비): 맨해튼 거리 4칸 이내에 타겟이 있다면 즉시 꽂아버립니다!
+                if (globalMinDistance > 0 && globalMinDistance <= 4)
                 {
+                    Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 2스킬(화살비) 발동!");
+                    bestEnemy.OnSecondSkillButtonPressed();
+                    bestEnemy.OnSkillTargetClicked(targetCellPos, targetUnit, targetCore);
+                    isSkillUsed = true;
+                    yield return new WaitForSeconds(0.5f);
+                }
+                // 1스킬 (저격 모드): 타겟이 딱 5칸 거리에 있을 때 다음 턴을 위해 버프를 켭니다.
+                else if (!bestEnemy.isSniperMode && globalMinDistance == 5)
+                {
+                    Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 1스킬(저격 모드) 발동!");
                     bestEnemy.OnSkillButtonPressed();
                     isSkillUsed = true;
                     yield return new WaitForSeconds(0.5f);
                 }
             }
+            // 🔮 2. 마법사(Magician) 스킬 판단
+            else if (bestEnemy.unitClass == Unit.UnitClass.Magician)
+            {
+                // 💡 [새로운 로직] 1. 아군 구출 (체력 50% 이하인 아군이나 자신을 안전한 곳으로 텔레포트)
+                Unit allyToSave = null;
+                foreach (Unit ally in enemyUnits)
+                {
+                    if (ally.currentHp <= (ally.maxHp / 2f)) // 체력이 1/2 이하일 때
+                    {
+                        Vector3Int allyCell = BattleManager.Instance.gridTilemap.WorldToCell(ally.transform.position);
+                        if (GetManhattanDistance(enemyCellPos, allyCell) <= 4) // 마법사 스킬 사거리(4칸) 이내
+                        {
+                            allyToSave = ally;
+                            break;
+                        }
+                    }
+                }
+
+                bool usedTeleport = false;
+
+                if (allyToSave != null)
+                {
+                    Vector3Int allyCell = BattleManager.Instance.gridTilemap.WorldToCell(allyToSave.transform.position);
+                    
+                    // 💡 적 진영 기준 +방향 설정. 
+                    // (맵이 가로로 길다면 (1,0,0), 세로로 길다면 (0,1,0) 등 맵 형태에 맞게 수정해서 사용하세요!)
+                    Vector3Int backwardDir = new Vector3Int(1, 0, 0); 
+                    
+                    Vector3Int bestLandingCell = allyCell;
+                    bool foundLanding = false;
+
+                    // 최대한 뒤로 3칸 (3칸 -> 2칸 -> 1칸 순으로 안전한 빈칸을 역순 검색)
+                    for (int i = 3; i >= 1; i--)
+                    {
+                        Vector3Int checkCell = allyCell + backwardDir * i;
+                        Vector3 checkWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(checkCell);
+                        checkWorldPos.z = 0;
+
+                        Collider2D[] hits = Physics2D.OverlapPointAll(checkWorldPos);
+                        bool canLand = true;
+
+                        foreach (Collider2D hit in hits)
+                        {
+                            // 다른 유닛이나 코어가 서 있으면 이동 불가
+                            if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null) canLand = false;
+                            
+                            // Obstacle (가시(Spike), 바리케이드, 폭탄 등)이 있으면 즉시 제외
+                            Obstacle obs = hit.GetComponent<Obstacle>();
+                            if (obs != null) canLand = false; 
+                        }
+
+                        if (canLand)
+                        {
+                            bestLandingCell = checkCell;
+                            foundLanding = true;
+                            break; // 가장 먼 거리(3칸)부터 안전한 곳을 찾았으므로 즉시 탐색 종료
+                        }
+                    }
+
+                    if (foundLanding)
+                    {
+                        Debug.Log($"[EnemyAI] 마법사가 위험에 처한 아군({allyToSave.unitClass})을 피신시키기 위해 1스킬(텔레포트) 발동!");
+                        
+                        bestEnemy.OnSkillButtonPressed();
+                        // 1단계: 타겟(아군) 클릭
+                        bestEnemy.OnSkillTargetClicked(allyCell, allyToSave, null);
+                        yield return new WaitForSeconds(0.2f);
+                        
+                        // 2단계: 목적지(+방향 안전지대) 클릭
+                        bestEnemy.OnSkillDestinationClicked(bestLandingCell);
+                        
+                        isSkillUsed = true;
+                        usedTeleport = true;
+                        yield return new WaitForSeconds(0.5f);
+                    }
+                }
+
+                // 2. 구출할 아군이 없었거나 목적지를 찾지 못했다면 기존처럼 2스킬 (번개 마법) 공격 발동
+                if (!usedTeleport && distX <= 2 && distY <= 2 && globalMinDistance > 0)
+                {
+                    Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 2스킬(번개 마법) 발동!");
+                    bestEnemy.OnSecondSkillButtonPressed();
+                    bestEnemy.OnSkillTargetClicked(targetCellPos, targetUnit, targetCore);
+                    isSkillUsed = true;
+                    yield return new WaitForSeconds(0.5f);
+                }
+            }
+            // ⚔️ 3. 전사(Warrior) 스킬 판단
             else if (bestEnemy.unitClass == Unit.UnitClass.Warrior && bestEnemy.rootedTurns <= 0)
             {
-                if (enemyCellPos.x == targetCellPos.x || enemyCellPos.y == targetCellPos.y)
+                // 2스킬 (대검 소환): 타겟이 주변 1칸 범위(가로/세로 1 이하)에 바짝 붙어있을 때 사용!
+                if (distX <= 1 && distY <= 1 && globalMinDistance > 0)
                 {
-                    // 타겟이 3칸 이내에 있어야, 관통하고도 4칸(사거리) 이내의 빈칸에 착지할 수 있음
+                    Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 2스킬(대검 소환) 발동!");
+                    bestEnemy.OnSecondSkillButtonPressed(); // 이 스킬은 클릭 없이 즉시 발동됩니다.
+                    isSkillUsed = true;
+                    yield return new WaitForSeconds(0.5f);
+                }
+                // 1스킬 (돌진): 2스킬 사거리 밖이면서, 직선상 4칸 이내에 타겟이 있을 때
+                else if (enemyCellPos.x == targetCellPos.x || enemyCellPos.y == targetCellPos.y)
+                {
                     if (globalMinDistance > 0 && globalMinDistance <= 4)
                     {
                         // 타겟을 향하는 방향 계산
@@ -133,7 +249,7 @@ public class EnemyAIManager : MonoBehaviour
                         Vector3 landingWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(landingCell);
                         landingWorldPos.z = 0;
 
-                        // OverlapPointAll을 사용하여 착지할 칸에 뭐가 있는지 전부 검사!
+                        // 착지할 칸에 방해물이 있는지 검사
                         Collider2D[] hits = Physics2D.OverlapPointAll(landingWorldPos);
                         bool canLand = true;
 
@@ -147,11 +263,11 @@ public class EnemyAIManager : MonoBehaviour
                         // 착지 지점이 완벽한 빈칸일 때만 돌진 발동!
                         if (canLand)
                         {
-                            Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 돌진 발동");
+                            Debug.Log($"[EnemyAI] {bestEnemy.unitClass} 1스킬(돌진) 발동");
                             bestEnemy.OnSkillTargetClicked(landingCell, null, null);
                             isSkillUsed = true;
 
-                            // 타임아웃이 적용된 돌진 대기
+                            // 돌진 애니메이션 대기
                             float dashTimeout = 2.0f;
                             while (Vector3.Distance(bestEnemy.transform.position, landingWorldPos) > 0.01f && dashTimeout > 0f)
                             {
@@ -164,6 +280,7 @@ public class EnemyAIManager : MonoBehaviour
                 }
             }
         }
+
         // --- 이동 및 공격 실행 (스킬을 안 썼을 때만) ---
         if (!isSkillUsed)
         {
@@ -224,6 +341,9 @@ public class EnemyAIManager : MonoBehaviour
                 if (currentDistToTarget <= bestEnemy.attackRange)
                 {
                     Debug.Log($"[EnemyAI] {bestEnemy.unitClass}가 대상을 기본 공격합니다!");
+
+                    bestEnemy.TriggerAttackAnim();
+                    
                     Unit pUnit = bestTarget.GetComponent<Unit>();
                     if (pUnit != null) pUnit.TakeDamage(bestEnemy.atk);
 

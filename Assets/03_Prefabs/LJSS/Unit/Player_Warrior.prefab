@@ -157,11 +157,14 @@ MonoBehaviour:
   isSniperMode: 0
   sniperModeTurnsLeft: 0
   rootedTurns: 0
+  buffEffectObj: {fileID: 0}
   moveSpeed: 2
   hitFlashDuration: 0.3
   activeHighlight: {fileID: 1422995426597680184}
   inspectedHighlight: {fileID: 0}
   dashSpeed: 10
+  swordEruptionPrefab: {fileID: 9040280516517953764, guid: 59bc6ad8afd77a74a9ec7570a67ce245, type: 3}
+  aoeDamage: 30
 --- !u!95 &1480748944600202233
 Animator:
   serializedVersion: 5

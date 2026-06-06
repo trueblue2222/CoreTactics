@@ -2,8 +2,16 @@ using UnityEngine;
 
 public class Magician : Unit
 {
+    [Header("Second Skill (Lightning AoE)")]
+    public GameObject lightningEffectPrefab; // 번개 스프라이트 프리팹
+    public int lightningDamage = 10;         // 번개 피해량
+
+    private bool isUsingSecondSkill = false;
+
     public override void OnSkillButtonPressed()
     {
+        isUsingSecondSkill = false;
+
         Debug.Log("공간 이동시킬 대상을 클릭하세요.");
         BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkill;
         BattleManager.Instance.ClearHighlights();
@@ -26,12 +34,95 @@ public class Magician : Unit
         }
     }
 
+    public override void OnSecondSkillButtonPressed()
+    {
+        if (rootedTurns > 0)
+        {
+            Debug.Log("점액으로 인해 스킬 사용 불가");
+            return;
+        }
+
+        isUsingSecondSkill = true; 
+        Debug.Log("마법사: 번개를 떨어뜨릴 대상을 선택하세요. (2칸 이내 범위 전체 표시)");
+
+        BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkill;
+        BattleManager.Instance.ClearHighlights();
+
+        Vector3Int centerCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
+
+        // 💡 가로/세로/대각선 5x5 정사각형 사거리 스캔
+        for (int x = -2; x <= 2; x++)
+        {
+            for (int y = -2; y <= 2; y++)
+            {
+                Vector3Int targetCell = centerCell + new Vector3Int(x, y, 0);
+                
+                // 💡 [수정] 유닛 유무와 상관없이 사거리(25칸) 전체를 클릭 가능한 범위로 보여줍니다.
+                BattleManager.Instance.validSkillCells.Add(targetCell);
+                BattleManager.Instance.SpawnHighlight(targetCell);
+            }
+        }
+    }
+
+    private void ExecuteLightningSkill(Vector3Int targetCellPos)
+    {
+        TriggerSecondSkillAnim();
+
+        // 💡 대상 타일과 주변 1칸(맨해튼 거리 = 십자 모양) 좌표를 모아둡니다.
+        Vector3Int[] aoeCells = {
+            targetCellPos,                      // 중앙 (타겟)
+            targetCellPos + Vector3Int.up,      // 위
+            targetCellPos + Vector3Int.down,    // 아래
+            targetCellPos + Vector3Int.left,    // 왼쪽
+            targetCellPos + Vector3Int.right    // 오른쪽
+        };
+
+        foreach (Vector3Int cell in aoeCells)
+        {
+            Vector3 worldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cell);
+            worldPos.z = 0;
+
+            // 1. 번개 이펙트 소환 (1초 뒤 자동 파괴)
+            if (lightningEffectPrefab != null)
+            {
+                GameObject effect = Instantiate(lightningEffectPrefab, worldPos, Quaternion.identity);
+                Destroy(effect, 1f);
+            }
+
+            // 2. 데미지 판정
+            Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
+            foreach (Collider2D hit in hits)
+            {
+                Unit unit = hit.GetComponent<Unit>();
+                if (unit != null && unit.team != this.team) unit.TakeDamage(lightningDamage);
+
+                Core core = hit.GetComponent<Core>();
+                if (core != null && core.team != this.team) core.TakeDamage(lightningDamage);
+
+                // 번개가 폭탄에 내리치면 폭탄도 기폭됩니다!
+                Obstacle obs = hit.GetComponent<Obstacle>();
+                if (obs != null && obs.obstacleType == Obstacle.ObstacleType.Bomb) obs.TriggerBomb();
+            }
+        }
+
+        // 스킬 종료 및 뒷정리
+        BattleManager.Instance.ClearHighlights();
+        BattleManager.Instance.currentState = BattleManager.BattleState.Idle;
+        isUsingSecondSkill = false; // 💡 다음 스킬 사용을 위해 스위치 초기화
+        skillCooldown = 3;          // 💡 쿨타임 3턴 적용
+
+        if (TurnManager.Instance.IsPlayerTurn)
+        {
+            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+        }
+    }
+
     public override void OnSkillTargetClicked(Vector3Int cellPos, Unit clickedUnit, Core clickedCore)
     {
         Vector3 worldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(cellPos);
         worldPos.z = 0;
 
-        // 💡 [추가] 클릭한 위치에 폭탄이 있는지 검사합니다.
+        // 클릭한 위치에 폭탄이 있는지 공통으로 검사
         Obstacle clickedBomb = null;
         Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
         foreach (Collider2D hit in hits)
@@ -44,34 +135,73 @@ public class Magician : Unit
             }
         }
 
+        // ⚡ [2스킬] 번개 마법 모드일 경우
+        if (isUsingSecondSkill)
+        {
+            bool isValidTarget = false;
+
+            // 💡 [핵심 수정] 타겟이 존재하고, 아군이 아닐 때(적군일 때) 혹은 폭탄일 때만 타겟으로 인정합니다!
+            if (clickedUnit != null && clickedUnit.team != this.team) isValidTarget = true;
+            if (clickedCore != null && clickedCore.team != this.team) isValidTarget = true;
+            if (clickedBomb != null) isValidTarget = true;
+
+            if (isValidTarget)
+            {
+                // 올바른 적을 클릭했다면 번개 발사!
+                ExecuteLightningSkill(cellPos);
+            }
+            else
+            {
+                // 빈 땅이나 아군을 클릭했다면 경고만 띄우고 스킬을 취소시키지 않습니다. (다시 클릭할 수 있음)
+                Debug.Log("사거리 내의 적 유닛, 적 코어, 또는 폭탄만 선택할 수 있습니다!");
+            }
+            return; // 2스킬 로직 종료
+        }
+
+        // 🔮 [1스킬] 텔레포트 모드일 경우 (기존 로직)
         if (clickedUnit != null)
         {
-            Debug.Log($"대상 유닛 {clickedUnit.unitClass} 선택");
             BattleManager.Instance.skillTargetUnit = clickedUnit;
-            BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkillDestination;
-            ShowDestinationTiles(clickedUnit);
+            BattleManager.Instance.skillTargetObstacle = null;
         }
         else if (clickedBomb != null)
         {
             BattleManager.Instance.skillTargetObstacle = clickedBomb;
-            BattleManager.Instance.skillTargetUnit = null; // 유닛 비우기
+            BattleManager.Instance.skillTargetUnit = null;
         }
         else
         {
             Debug.Log("스킬 대상(유닛 또는 폭탄)이 없습니다.");
-            return; // 아무것도 없으면 취소
+            return;
         }
 
         Debug.Log("이동시킬 목적지를 클릭하세요.");
         BattleManager.Instance.currentState = BattleManager.BattleState.SelectingSkillDestination;
+
+        ShowDestinationTiles();
     }
 
-    private void ShowDestinationTiles(Unit targetUnit)
+    private void ShowDestinationTiles()
     {
         BattleManager.Instance.ClearHighlights();
         BattleManager.Instance.validSkillCells.Clear();
 
-        Vector3Int startCell = BattleManager.Instance.gridTilemap.WorldToCell(targetUnit.transform.position);
+        // 💡 [핵심 추가] 누가 타겟으로 지정되어 있는지 불러옵니다.
+        Unit targetUnit = BattleManager.Instance.skillTargetUnit;
+        Obstacle targetBomb = BattleManager.Instance.skillTargetObstacle;
+
+        // 타겟의 Transform(위치 정보)을 담을 빈 바구니를 만듭니다.
+        Transform targetTransform = null;
+
+        // 유닛이 있다면 유닛의 위치를, 폭탄이 있다면 폭탄의 위치를 바구니에 담습니다.
+        if (targetUnit != null) targetTransform = targetUnit.transform;
+        else if (targetBomb != null) targetTransform = targetBomb.transform;
+
+        // 혹시라도 둘 다 없으면 안전하게 빠져나갑니다.
+        if (targetTransform == null) return; 
+
+        // 💡 [수정] 위에서 찾은 타겟의 위치를 기준으로 시작 칸을 정합니다!
+        Vector3Int startCell = BattleManager.Instance.gridTilemap.WorldToCell(targetTransform.position);
         int range = 3;
 
         for (int x = -range; x <= range; x++)
@@ -85,7 +215,6 @@ public class Magician : Unit
 
                     Vector3 worldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(targetCell);
 
-                    // 텔레포트 목적지 검사도 OverlapPointAll 로 교체!
                     Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
                     bool isPassable = true;
 
@@ -96,7 +225,7 @@ public class Magician : Unit
 
                         if (hit.GetComponent<Unit>() != null || hit.GetComponent<Core>() != null)
                         {
-                            isPassable = false; // 목적지에 다른 유닛/코어가 있다면 텔레포트 불가
+                            isPassable = false; 
                         }
                     }
 
