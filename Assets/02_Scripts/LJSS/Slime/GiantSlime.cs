@@ -8,8 +8,16 @@ public class GiantSlime : MonoBehaviour
 
     [Header("Slime Setting")]
     public GameObject slimePuddlePrefab;
+    public GameObject slimeProjectilePrefab;
     public int attackCooldown = 3;
     private int currentCooldown;
+
+    [Header("Projectile")]
+    [SerializeField] private float projectileDuration = 0.6f;
+    [SerializeField] private float projectileArcHeight = 2.0f;
+
+    [Header("Animation")]
+    [SerializeField] private float shootAnimDuration = 1.0f;
 
     [Header("Map Setting")]
     public int minX = -7;
@@ -18,6 +26,7 @@ public class GiantSlime : MonoBehaviour
     public int maxY = 2;
 
     private List<SlimePuddle> activePuddles = new List<SlimePuddle>();
+    private Animator anim;
 
     // GameStateSerializer에서 LLM 데이터 빌드 시 사용
     public int CooldownRemaining => currentCooldown;
@@ -26,6 +35,7 @@ public class GiantSlime : MonoBehaviour
     {
         Instance = this;
         currentCooldown = attackCooldown;
+        anim = GetComponent<Animator>();
     }
 
     public void OnRoundPassed()
@@ -40,13 +50,20 @@ public class GiantSlime : MonoBehaviour
         if (currentCooldown <= 0)
         {
             Debug.Log("<color=green>[거대 슬라임] 이번 턴에 점액을 발사합니다!</color>");
-            ShootSlimePuddles(4);
+            StartCoroutine(ShootWithAnimRoutine(4));
             currentCooldown = attackCooldown;
         }
         else
         {
             Debug.Log($"<color=orange>[거대 슬라임] 점액 발사까지 {currentCooldown}라운드 남았습니다.</color>");
         }
+    }
+
+    private IEnumerator ShootWithAnimRoutine(int amount)
+    {
+        if (anim != null) anim.SetTrigger("Shoot");
+        yield return new WaitForSeconds(shootAnimDuration);
+        ShootSlimePuddles(amount);
     }
 
     private void ShootSlimePuddles(int amount)
@@ -69,10 +86,10 @@ public class GiantSlime : MonoBehaviour
             Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
             bool hasObstacle = false;
 
-            foreach(Collider2D hit in hits){
-                Obstacle obs = hit.GetComponent<Obstacle>();
-                if (hit.GetComponent<Obstacle>() != null || 
-                    hit.GetComponent<Unit>() != null || 
+            foreach (Collider2D hit in hits)
+            {
+                if (hit.GetComponent<Obstacle>() != null ||
+                    hit.GetComponent<Unit>() != null ||
                     hit.GetComponent<Core>() != null)
                 {
                     hasObstacle = true;
@@ -82,15 +99,32 @@ public class GiantSlime : MonoBehaviour
 
             if (!hasObstacle)
             {
-                GameObject puddleObj = Instantiate(slimePuddlePrefab, worldPos, Quaternion.identity);
-                SlimePuddle puddle = puddleObj.GetComponent<SlimePuddle>();
-                activePuddles.Add(puddle);
-
-                puddle.CheckUnitOnPuddle();
-
+                LaunchProjectile(worldPos);
                 spawned++;
             }
         }
+    }
+
+    private void LaunchProjectile(Vector3 landPos)
+    {
+        if (slimeProjectilePrefab != null)
+        {
+            GameObject projObj = Instantiate(slimeProjectilePrefab, transform.position, Quaternion.identity);
+            SlimeProjectile proj = projObj.GetComponent<SlimeProjectile>();
+            proj.Launch(transform.position, landPos, projectileDuration, projectileArcHeight, () => SpawnPuddle(landPos));
+        }
+        else
+        {
+            SpawnPuddle(landPos);
+        }
+    }
+
+    private void SpawnPuddle(Vector3 pos)
+    {
+        GameObject puddleObj = Instantiate(slimePuddlePrefab, pos, Quaternion.identity);
+        SlimePuddle puddle = puddleObj.GetComponent<SlimePuddle>();
+        activePuddles.Add(puddle);
+        puddle.CheckUnitOnPuddle();
     }
 }
 

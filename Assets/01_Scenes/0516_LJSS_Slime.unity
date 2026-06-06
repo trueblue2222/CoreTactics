@@ -2865,6 +2865,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pickFirstAttackDelay: 1
   firstAttackResultDisplayTime: 1.5
+  turnStartDelay: 2.5
 --- !u!4 &613119429
 Transform:
   m_ObjectHideFlags: 0
@@ -5524,6 +5525,32 @@ RectTransform:
   m_AnchoredPosition: {x: -1.8000488, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1314226158 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1712040776816214973, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
+  m_PrefabInstance: {fileID: 546263953529920617}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &1314226164
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314226158}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 7de50224004727542b73aeccfdde6639, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1319462932
 GameObject:
   m_ObjectHideFlags: 0
@@ -8282,10 +8309,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7651294056627705245, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
+      propertyPath: projectileDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7651294056627705245, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
+      propertyPath: projectileArcHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7651294056627705245, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
+      propertyPath: slimeProjectilePrefab
+      value: 
+      objectReference: {fileID: 1043955993963051257, guid: 184ec2c4a8f52a64d86344f25a480e60, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1712040776816214973, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1314226164}
   m_SourcePrefab: {fileID: 100100000, guid: fad3a9d71d46f69449ce5b2a8b001873, type: 3}
 --- !u!1001 &957514185767600537
 PrefabInstance:
