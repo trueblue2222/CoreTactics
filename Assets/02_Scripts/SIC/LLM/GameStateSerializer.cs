@@ -55,6 +55,17 @@ public class GameStateSerializer : MonoBehaviour
     // ─── 게임 상태 직렬화 ────────────────────────────────────────────────
     public string SerializeCurrentGameState()
     {
+        // 플레이어 코어 위치를 먼저 확인 — 적 유닛 distanceToPlayerCore 계산에 사용
+        CellPos playerCorePos = null;
+        foreach (var pair in idToCore)
+        {
+            if (pair.Value != null && pair.Value.team == "Player")
+            {
+                playerCorePos = ToCell(pair.Value.transform.position);
+                break;
+            }
+        }
+
         var snapshot = new GameStateSnapshot
         {
             turn = TurnManager.Instance.TurnCount,
@@ -68,7 +79,7 @@ public class GameStateSerializer : MonoBehaviour
             Unit unit = pair.Key;
             if (unit == null || !unit.gameObject.activeInHierarchy || unit.currentHp <= 0) continue;
 
-            UnitSnapshot us = BuildUnitSnapshot(unit, pair.Value);
+            UnitSnapshot us = BuildUnitSnapshot(unit, pair.Value, playerCorePos);
             if (unit.team == "Player") snapshot.playerUnits.Add(us);
             else snapshot.enemyUnits.Add(us);
         }
@@ -92,10 +103,17 @@ public class GameStateSerializer : MonoBehaviour
         foreach (Obstacle obs in FindObjectsOfType<Obstacle>())
         {
             if (!obs.gameObject.activeInHierarchy) continue;
+            string obsType = obs.obstacleType switch
+            {
+                Obstacle.ObstacleType.Barricade => "Barricade",
+                Obstacle.ObstacleType.Spike     => "Spike",
+                Obstacle.ObstacleType.Bomb      => "Bomb",
+                _                               => "Unknown"
+            };
             snapshot.obstacles.Add(new ObstacleSnapshot
             {
                 position = ToCell(obs.transform.position),
-                type = obs.IsPassable() ? "Spike" : "Barricade"
+                type     = obsType
             });
         }
 
@@ -104,7 +122,7 @@ public class GameStateSerializer : MonoBehaviour
         return JsonUtility.ToJson(snapshot);
     }
 
-    private UnitSnapshot BuildUnitSnapshot(Unit unit, string id)
+    private UnitSnapshot BuildUnitSnapshot(Unit unit, string id, CellPos playerCorePos)
     {
         Vector3Int cell = BattleManager.Instance.gridTilemap.WorldToCell(unit.transform.position);
         var us = new UnitSnapshot
@@ -116,7 +134,6 @@ public class GameStateSerializer : MonoBehaviour
             currentHp = unit.currentHp,
             maxHp = unit.maxHp,
             atk = unit.atk,
-            def = unit.def,
             moveRange = unit.moveRange,
             attackRange = unit.attackRange,
             skillCooldown = unit.skillCooldown,
@@ -128,6 +145,8 @@ public class GameStateSerializer : MonoBehaviour
         {
             us.reachableCells = ComputeReachableCells(unit, cell);
             us.attackableTargetIds = ComputeAttackableTargetIds(cell, unit.attackRange);
+            if (playerCorePos != null)
+                us.distanceToPlayerCore = Mathf.Abs(cell.x - playerCorePos.x) + Mathf.Abs(cell.y - playerCorePos.y);
         }
 
         return us;

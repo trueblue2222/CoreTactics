@@ -77,21 +77,29 @@ public class BattleManager : MonoBehaviour
     {
         if (newState == GameState.PlayerTurnEnd)
         {
-            // 행동 완료 → 버튼 비활성화
             UIManager.Instance.HideActionButtons();
+        }
 
+        // 유닛 행동 완료 후 다음 유닛 선택 상태로 복귀할 때 정리
+        if (newState == GameState.PlayerUnitSelect)
+        {
+            ClearHighlights();
+            if (activeUnit != null) activeUnit.ClearHighlights();
+            activeUnit = null;
+            currentState = BattleState.Idle;
+            UIManager.Instance.ClearActiveUnitUI();
+            UIManager.Instance.HideActionButtons();
         }
 
         if (newState == GameState.EnemyTurnStart)
         {
-            Debug.Log("[BattleManager] 적 턴 시작시 플레이어 행동 및 하이라이트 및 선택 상태 초기화");
+            Debug.Log("[BattleManager] 적 턴 시작 — 선택 상태 초기화");
 
             ClearHighlights();
             if (activeUnit != null) activeUnit.ClearHighlights();
             if (inspectedUnit != null) inspectedUnit.ClearHighlights();
 
             currentState = BattleState.Idle;
-
             activeUnit = null;
             inspectedUnit = null;
             skillTargetUnit = null;
@@ -132,7 +140,7 @@ public class BattleManager : MonoBehaviour
                 bool isSelectPhase = gs == GameState.PlayerUnitSelect
                                   || gs == GameState.PlayerActionSelect;
 
-                if (isSelectPhase)
+                if (isSelectPhase && !clickedUnit.hasActedThisTurn)
                 {
                     if (activeUnit != null && activeUnit != clickedUnit)
                         activeUnit.SetActiveHighlight(false);

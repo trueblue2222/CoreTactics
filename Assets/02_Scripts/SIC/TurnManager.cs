@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -135,8 +136,27 @@ public class TurnManager : MonoBehaviour
     // ─── PlayerTurnEnd ───────────────────────────────────────
     private void OnPlayerTurnEnd()
     {
-        Debug.Log($"[TurnManager] 플레이어 턴 종료 (턴 {TurnCount}) — TurnEnd 버튼 대기 중");
-        // EnemyTurnStart 전환은 UIManager의 TurnEnd 버튼이 담당
+        // 방금 행동한 유닛 마킹
+        Unit actedUnit = BattleManager.Instance.activeUnit;
+        if (actedUnit != null && !actedUnit.hasActedThisTurn)
+        {
+            actedUnit.hasActedThisTurn = true;
+            actedUnit.SetActedVisual(true);
+        }
+
+        // 아직 행동하지 않은 플레이어 유닛이 있으면 선택 단계로 복귀
+        foreach (Unit unit in FindObjectsOfType<Unit>())
+        {
+            if (unit.team == "Player" && unit.gameObject.activeInHierarchy
+                && unit.currentHp > 0 && !unit.hasActedThisTurn)
+            {
+                Debug.Log($"[TurnManager] 미행동 유닛 존재 — 다음 유닛 선택");
+                ChangeState(GameState.PlayerUnitSelect);
+                return;
+            }
+        }
+
+        Debug.Log($"[TurnManager] 모든 플레이어 유닛 행동 완료 (턴 {TurnCount}) — 턴 종료 대기");
     }
 
     // ─── TurnEnd 버튼 클릭 시 호출 (UIManager에서 연결) ─────────────────
@@ -238,9 +258,9 @@ public class TurnManager : MonoBehaviour
 
         // 4단계: 파싱 및 검증
         ChangeState(GameState.LLMValidating);
-        EnemyActionData action = LLMActionParser.Instance.ParseAndValidate(rawResponse);
+        List<EnemyActionData> actions = LLMActionParser.Instance.ParseAndValidate(rawResponse);
 
-        if (action == null)
+        if (actions == null || actions.Count == 0)
         {
             Debug.LogWarning("[TurnManager] LLM 응답 검증 실패 → Fallback AI 전환");
             LLMLogger.Instance.LogResult(rawResponse, null, "파싱·검증 실패");
@@ -248,11 +268,11 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
-        LLMLogger.Instance.LogResult(rawResponse, action);
+        LLMLogger.Instance.LogResult(rawResponse, actions[0]);
 
         // 5단계: 행동 실행
         ChangeState(GameState.EnemyActionExecute);
-        yield return StartCoroutine(LLMActionExecutor.Instance.ExecuteAction(action));
+        yield return StartCoroutine(LLMActionExecutor.Instance.ExecuteActions(actions));
 
         // 6단계: 플레이어 턴으로 전환
         ChangeState(GameState.PlayerTurnStart);

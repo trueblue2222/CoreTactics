@@ -26,6 +26,7 @@ public class Unit : MonoBehaviour
     public bool isSniperMode = false;
     public int sniperModeTurnsLeft = 0;
     public int rootedTurns = 0; // 점액 구속 상태 (0이면 정상, 1 이상 이면 이동 불가)
+    public bool hasActedThisTurn = false;
 
     public GameObject buffEffectObj;
 
@@ -117,8 +118,19 @@ public class Unit : MonoBehaviour
     {
     }
 
+    public void SetActedVisual(bool acted)
+    {
+        if (spriteRenderer == null) return;
+        Color c = spriteRenderer.color;
+        c.a = acted ? 0.4f : 1f;
+        spriteRenderer.color = c;
+    }
+
     public void UpdateTurnState()
     {
+        hasActedThisTurn = false;
+        SetActedVisual(false);
+
         if (skillCooldown > 0)
         {
             skillCooldown--;

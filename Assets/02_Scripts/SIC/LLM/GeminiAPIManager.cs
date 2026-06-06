@@ -21,7 +21,7 @@ public class GeminiAPIManager : MonoBehaviour
     [SerializeField] [Range(0f, 1f)] private float temperature = 0.3f;
     // thinking 토큰과 실제 응답 토큰이 이 예산을 공유합니다.
     // thinking 비활성화 시 512로도 충분하지만, 활성화 상태라면 8192 이상 권장.
-    [SerializeField] private int maxOutputTokens = 8192;
+    [SerializeField] private int maxOutputTokens = 512;
     // 0 = thinking 비활성화 (게임 AI 응답은 단순 JSON이므로 thinking 불필요)
     // -1 = 모델 기본값 사용
     [SerializeField] private int thinkingBudget = 0;
@@ -110,8 +110,8 @@ public class GeminiAPIManager : MonoBehaviour
 
         string userMsg =
             $"Current game state (JSON):\n{gameStateJson}\n\n" +
-            "Choose the best action for ONE enemy unit this turn. " +
-            "Respond with a single JSON object only — no explanation, no markdown.";
+            "DESTROY the player Core and all player units. " +
+            "Output ONE aggressive action per enemy unit as a JSON array — no markdown, no explanation.";
 
         yield return StartCoroutine(PostRequest(userMsg, onSuccess, onFailure, logForSession: true));
     }
@@ -264,45 +264,48 @@ public class GeminiAPIManager : MonoBehaviour
 
     private string BuildBasePrompt() =>
 "You are an AI enemy controller in a turn-based grid strategy game.\n" +
-"Your goal: destroy the PLAYER's Core (reduce its HP to 0). Protect your own Core.\n\n" +
+"GOAL: Destroy the PLAYER Core (HP→0) and eliminate all player units. Protect your own Core.\n\n" +
+"=== RULES ===\n" +
+"Every enemy unit performs exactly ONE action per turn. Return a JSON array — one object per unit.\n\n" +
 "=== UNIT CLASSES ===\n" +
-"Warrior  : high HP/ATK, attackRange=1 (melee), moveRange=3.\n" +
-"           Skill=Dash (cooldown 2): charge in one cardinal direction up to 4 cells, dealing 20 damage to everything in the path.\n" +
-"           Needs dashDestination: same row OR column as warrior, within 4 cells, landing cell must be empty.\n\n" +
-"Archer   : medium stats, attackRange=3, moveRange=2.\n" +
-"           Skill=SniperMode (cooldown 2): +1 attackRange, moveRange=0 for 2 turns. No extra params.\n\n" +
-"Magician : low HP, high ATK, attackRange=2, moveRange=2.\n" +
-"           Skill=Teleport (cooldown 3): move any unit to a new cell.\n" +
-"           Needs skillTargetId + skillDestination (empty cell).\n\n" +
-"=== UNIT STATE FIELDS ===\n" +
-"isRooted=true  : unit is trapped by slime — cannot move, Warrior cannot use Dash skill.\n" +
-"isSniperMode   : Archer is in sniper mode — cannot move but has extended attack range.\n\n" +
-"=== ACTIONS (pick exactly one) ===\n" +
-"move   : move to a cell in reachableCells → set moveTarget:{x,y}\n" +
-"attack : attack a target → set attackTargetId (MUST be from attackableTargetIds)\n" +
-"skill  : use special ability (skillCooldown must be 0)\n" +
-"skip   : do nothing\n\n" +
-"=== OUTPUT FORMAT (JSON only, no markdown) ===\n" +
-"{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"move\",\"moveTarget\":{\"x\":5,\"y\":3}}\n" +
-"{\"unitId\":\"enemy_archer_0\",\"actionType\":\"attack\",\"attackTargetId\":\"player_warrior_0\"}\n" +
-"{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"attack\",\"attackTargetId\":\"player_core\"}\n" +
-"{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"skill\",\"dashDestination\":{\"x\":7,\"y\":3}}\n" +
-"{\"unitId\":\"enemy_archer_0\",\"actionType\":\"skill\"}\n" +
-"{\"unitId\":\"enemy_magician_0\",\"actionType\":\"skill\",\"skillTargetId\":\"player_warrior_0\",\"skillDestination\":{\"x\":8,\"y\":5}}\n" +
-"{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"skip\"}\n\n" +
+"Warrior  | attackRange=1 moveRange=3\n" +
+"  skill (cd2): Dash — up to 4 cells in one cardinal dir, 20dmg to all in path.\n" +
+"               dashDestination: same row/col, ≤4 cells, landing cell empty.\n" +
+"  skill2(cd3): Great Sword — 20dmg to all 8 surrounding cells. No extra params.\n\n" +
+"Archer   | attackRange=3 moveRange=2\n" +
+"  skill (cd2): Sniper Mode — +1 attackRange, moveRange=0 for 3 turns. No extra params.\n" +
+"  skill2(cd3): Arrow Shower — 10dmg to vertical 3 cells.\n" +
+"               skill2Target:{x,y} center (manhattan≤4, must contain enemy unit or enemy core).\n\n" +
+"Magician | attackRange=2 moveRange=2\n" +
+"  skill (cd3): Teleport — move any unit to empty cell.\n" +
+"               skillTargetId + skillDestination (empty, manhattan≤3 of target).\n" +
+"  skill2(cd3): Lightning — 10dmg cross-shape 5 cells.\n" +
+"               skill2Target:{x,y} center (|dx|≤2 AND |dy|≤2, must contain enemy unit/core/bomb).\n\n" +
+"=== OBSTACLES ===\n" +
+"Barricade: blocks movement and Warrior Dash.\n" +
+"Spike: passable, deals trap damage — avoid as moveTarget.\n" +
+"Bomb: impassable; explodes (radius2, 30dmg) when hit or caught in AoE; chains. Magician can Teleport bombs.\n\n" +
+"=== UNIT STATES ===\n" +
+"isRooted=true — no move; Warrior cannot Dash. → attack or skip only.\n" +
+"isSniperMode  — no move. → attack, skill2, or skip only.\n" +
+"skillCooldown — must be 0 to use skill or skill2.\n\n" +
+"=== ACTIONS ===\n" +
+"move   → moveTarget:{x,y} (must be in reachableCells)\n" +
+"attack → attackTargetId  (must be in attackableTargetIds; if empty → cannot attack)\n" +
+"skill / skill2 → skillCooldown must be 0\n" +
+"skip   → ONLY if isRooted==true AND attackableTargetIds is empty\n\n" +
+"=== OUTPUT FORMAT ===\n" +
+"[{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"attack\",\"attackTargetId\":\"player_core\"},...]\n" +
+"No markdown, no explanation.\n\n" +
 "=== STRATEGY ===\n" +
-"1. Attack player Core if reachable.\n" +
-"2. Eliminate low-HP player units.\n" +
-"3. Use skills when advantageous.\n" +
-"4. Move toward player Core.\n\n" +
-"=== CONSTRAINTS ===\n" +
-"- moveTarget MUST be in reachableCells.\n" +
-"- attackTargetId MUST be in attackableTargetIds (pre-calculated, no guessing needed).\n" +
-"- If attackableTargetIds is empty, do NOT use attack — choose move or skill instead.\n" +
-"- skill requires skillCooldown == 0.\n" +
-"- Warrior dashDestination: same row/column, within 4 cells, empty.\n" +
-"- Magician skillDestination: empty cell.\n" +
-"- isRooted=true units: do NOT use move or Warrior skill — choose attack or skip instead.";
+"FIGHT AGGRESSIVELY — never passive:\n" +
+"1. attackableTargetIds contains player Core → ATTACK it immediately.\n" +
+"2. skillCooldown==0 and skill/skill2 can hit player unit or Core → USE it.\n" +
+"3. MOVE to reachableCells cell that minimizes distanceToPlayerCore.\n" +
+"4. attackableTargetIds non-empty → ATTACK (prefer lowest currentHp target).\n" +
+"5. MOVE toward nearest player unit.\n" +
+"6. Always move — NEVER skip voluntarily.\n" +
+"ALWAYS use skills offensively. Warrior rushes the Core; Archer/Magician support from range.";
 
     private string BuildBigObjectRules() =>
         GameConfig.SelectedBigObject switch
@@ -313,42 +316,17 @@ public class GeminiAPIManager : MonoBehaviour
         };
 
     private string BuildGiantSlimeRules() =>
-"=== MAP GIMMICK: GIANT SLIME ===\n" +
-"Every 3 rounds, the Giant Slime spawns SlimePuddles on 2 random empty tiles.\n\n" +
-"bigObject fields:\n" +
-"  type             = \"GiantSlime\"\n" +
-"  cooldownRemaining = rounds until next puddle spawn (3 → 2 → 1 → spawns → resets to 3)\n" +
-"  slimePuddles     = list of {x,y} positions with active slime on the map\n\n" +
-"SLIME RULES:\n" +
-"- A unit that moves onto a slimed tile becomes ROOTED (isRooted=true) for 1 turn.\n" +
-"- The puddle disappears after a unit steps on it.\n" +
-"- Rooted units: cannot move, Warrior cannot use Dash.\n" +
-"- Magician CAN teleport rooted units — skillTargetId may be a rooted unit.\n\n" +
-"STRATEGY vs SLIME:\n" +
-"- Check slimePuddles before choosing moveTarget — avoid slimed tiles for your own units.\n" +
-"- If a player unit is rooted (isRooted=true), prioritize attacking it (easy target).\n" +
-"- Use Magician Teleport to move an enemy unit that is rooted to a better position.\n" +
-"- Use Magician Teleport to drop a player unit onto a slimed tile intentionally.";
+"=== GIMMICK: GIANT SLIME ===\n" +
+"Every 3 rounds: spawns SlimePuddles on 2 random empty tiles (bigObject.slimePuddles).\n" +
+"SlimePuddle: unit stepping on it → isRooted 1 turn, puddle removed.\n" +
+"Rules: avoid slimePuddles in moveTarget. Attack rooted player units (easy targets).\n" +
+"       Magician Teleport: free a rooted ally, or drop a player unit onto a slimed tile.";
 
     private string BuildBlackMageRules() =>
-"=== MAP GIMMICK: BLACK MAGE ===\n" +
-"Every 3 rounds, the Black Mage teleports one random unit from EACH team to a random tile.\n\n" +
-"bigObject fields:\n" +
-"  type              = \"BlackMage\"\n" +
-"  cooldownRemaining = rounds until next teleport (counts down 3 → 2 → 1 → 0 → teleports)\n" +
-"  isWarningPhase    = true when teleport happens NEXT round (cooldownRemaining=1)\n" +
-"  warnedEnemyUnitId  = ID of the enemy unit that WILL be teleported next round (warning only)\n" +
-"  warnedPlayerUnitId = ID of the player unit that WILL be teleported next round (warning only)\n" +
-"  enemyTeleportDest  = {x,y} where the warned enemy unit will land (warning only)\n" +
-"  playerTeleportDest = {x,y} where the warned player unit will land (warning only)\n\n" +
-"BLACK MAGE RULES:\n" +
-"- Teleport destinations are always empty, passable tiles — no choice in destination.\n" +
-"- Both teams are affected simultaneously; you cannot prevent it.\n" +
-"- Teleport ignores isRooted state — a rooted unit can still be teleported.\n\n" +
-"STRATEGY vs BLACK MAGE:\n" +
-"- When isWarningPhase=true: if warnedEnemyUnitId is a key attacker, delay committing it\n" +
-"  to a multi-step plan since its position will change next round.\n" +
-"- When isWarningPhase=true: if warnedPlayerUnitId is your current attack target,\n" +
-"  prioritize finishing it this round before it teleports away.\n" +
-"- cooldownRemaining=1 (warning) and cooldownRemaining=0 (imminent) both signal caution.";
+"=== GIMMICK: BLACK MAGE ===\n" +
+"Every 3 rounds: teleports one random unit per team to a random empty tile.\n" +
+"bigObject: cooldownRemaining, isWarningPhase, warnedEnemyUnitId, enemyTeleportDest, warnedPlayerUnitId, playerTeleportDest.\n" +
+"isWarningPhase=true (cooldownRemaining=1):\n" +
+"  • warnedEnemyUnitId relocates next round — avoid depending on its current position.\n" +
+"  • warnedPlayerUnitId escapes next round — finish it THIS turn if possible.";
 }

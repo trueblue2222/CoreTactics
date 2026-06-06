@@ -6,12 +6,13 @@ using System.Collections.Generic;
 public class EnemyActionData
 {
     public string unitId;
-    public string actionType;        // "move" | "attack" | "skill" | "skip"
+    public string actionType;        // "move" | "attack" | "skill" | "skill2" | "skip"
     public CellPos moveTarget;
     public string attackTargetId;
     public string skillTargetId;     // Magician 텔레포트 대상
     public CellPos skillDestination; // Magician 텔레포트 목적지
     public CellPos dashDestination;  // Warrior 돌진 착지 지점
+    public CellPos skill2Target;     // Archer/Magician 2스킬 타겟 셀
 }
 
 // 그리드 좌표
@@ -57,6 +58,7 @@ public class UnitSnapshot
     public bool isRooted;                         // rootedTurns > 0: 이동 불가, Warrior 돌진 불가
     public List<CellPos> reachableCells;          // 적 유닛에만 포함: 이동 가능한 셀 목록
     public List<string> attackableTargetIds;      // 적 유닛에만 포함: 지금 바로 공격 가능한 ID 목록
+    public int distanceToPlayerCore;              // 적 유닛에만 포함: 플레이어 코어까지 맨해튼 거리
 }
 
 [Serializable]
@@ -73,7 +75,7 @@ public class CoreSnapshot
 public class ObstacleSnapshot
 {
     public CellPos position;
-    public string type; // "Barricade" | "Spike"
+    public string type; // "Barricade" | "Spike" | "Bomb"
 }
 
 [Serializable]
