@@ -9,9 +9,13 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    // ─── 선공 표시 ────────────────────────────────────────────
-    [Header("선공 표시")]
-    [SerializeField] private TMP_Text firstAttackText;
+    // ─── 턴 배너 ─────────────────────────────────────────────
+    [Header("턴 배너")]
+    [SerializeField] private GameObject playerTurnObject;
+    [SerializeField] private GameObject enemyTurnObject;
+    [SerializeField] private float bannerFadeDuration = 0.5f;
+    [SerializeField] private float bannerDisplayTime  = 1.5f;
+    private Coroutine _turnBannerCoroutine;
 
     // ─── 턴 종료 버튼 ─────────────────────────────────────────
     [Header("턴 종료 버튼")]
@@ -91,7 +95,8 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        firstAttackText?.gameObject.SetActive(false);
+        playerTurnObject?.SetActive(false);
+        enemyTurnObject?.SetActive(false);
         turnEndNoticeText?.gameObject.SetActive(false);
         SetTurnEndButton(false);
 
@@ -112,10 +117,55 @@ public class UIManager : MonoBehaviour
     // ─── 선공 결과 표시 ───────────────────────────────────────
     private void ShowFirstAttackResult(bool isPlayerFirst)
     {
-        if (firstAttackText != null)
-            firstAttackText.text = isPlayerFirst ? "Player Turn!" : "Enemy Turn!";
+        // 배너는 TurnStart 상태 전환 시 표시하므로 여기서는 처리 없음
+    }
 
-        firstAttackText?.gameObject.SetActive(true);
+    // ─── 턴 배너 표시 ─────────────────────────────────────────
+    private void ShowTurnBanner(bool isPlayerTurn)
+    {
+        GameObject active   = isPlayerTurn ? playerTurnObject : enemyTurnObject;
+        GameObject inactive = isPlayerTurn ? enemyTurnObject  : playerTurnObject;
+
+        inactive?.SetActive(false);
+
+        if (active == null) return;
+        active.SetActive(true);
+
+        if (_turnBannerCoroutine != null) StopCoroutine(_turnBannerCoroutine);
+        _turnBannerCoroutine = StartCoroutine(TurnBannerRoutine(active));
+    }
+
+    private IEnumerator TurnBannerRoutine(GameObject obj)
+    {
+        CanvasGroup cg = obj.GetComponent<CanvasGroup>();
+
+        if (cg == null)
+        {
+            yield return new WaitForSeconds(bannerDisplayTime);
+            obj.SetActive(false);
+            yield break;
+        }
+
+        cg.alpha = 0f;
+        yield return StartCoroutine(FadeCanvasGroup(cg, 1f));
+        yield return new WaitForSeconds(bannerDisplayTime);
+        yield return StartCoroutine(FadeCanvasGroup(cg, 0f));
+        obj.SetActive(false);
+    }
+
+    private IEnumerator FadeCanvasGroup(CanvasGroup cg, float targetAlpha)
+    {
+        float startAlpha = cg.alpha;
+        float elapsed    = 0f;
+
+        while (elapsed < bannerFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / bannerFadeDuration);
+            yield return null;
+        }
+
+        cg.alpha = targetAlpha;
     }
 
     // ─── 행동 불가 알림 표시 ──────────────────────────────────
@@ -145,9 +195,14 @@ public class UIManager : MonoBehaviour
     // ─── 상태 변화 처리 ───────────────────────────────────────
     private void OnStateChanged(GameState state)
     {
-        if (state == GameState.PlayerTurnStart || state == GameState.EnemyTurnStart)
+        if (state == GameState.PlayerTurnStart)
         {
-            firstAttackText?.gameObject.SetActive(false);
+            ShowTurnBanner(true);
+            turnEndNoticeText?.gameObject.SetActive(false);
+        }
+        else if (state == GameState.EnemyTurnStart)
+        {
+            ShowTurnBanner(false);
             turnEndNoticeText?.gameObject.SetActive(false);
         }
 

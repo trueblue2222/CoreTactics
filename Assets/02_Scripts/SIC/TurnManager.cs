@@ -23,6 +23,9 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private float pickFirstAttackDelay = 1f;
     [SerializeField] private float firstAttackResultDisplayTime = 1.5f;
 
+    // ─── 턴 시작 배너 대기 시간 (UIManager의 fadeDuration×2 + displayTime과 맞출 것) ──
+    [SerializeField] private float turnStartDelay = 2.5f;
+
     // ─────────────────────────────────────────────────────────
 
     void Awake()
@@ -111,32 +114,22 @@ public class TurnManager : MonoBehaviour
     }
 
     // ─── PlayerTurnStart ─────────────────────────────────────
-    private void OnPlayerTurnStart() // 0523 LJSS 수정 : 턴 시작 시 맵에 존재하는 모든 Unit script의 UpdateTurnState() 호출하여 턴 상태 업데이트
+    private void OnPlayerTurnStart()
     {
         TurnCount++;
         IsPlayerTurn = true;
         Debug.Log($"[TurnManager] 플레이어 턴 시작 (턴 {TurnCount})");
 
-        Unit[] allUnits = FindObjectsOfType<Unit>(); // 맵에 존재하는 모든 Unit script 참조
+        foreach (Unit unit in FindObjectsOfType<Unit>())
+            if (unit.team == "Player") unit.UpdateTurnState();
 
-        foreach (Unit unit in allUnits) // 모든 유닛의 턴 상태 업데이트
-        {
-            if (unit.team == "Player")
-            {
-                unit.UpdateTurnState();
-            }
-        }
-
-        // slime 기믹 때문에 추가
         if (TurnCount > 1)
         {
             if (GiantSlime.Instance != null) GiantSlime.Instance.OnRoundPassed();
-
-            if (BlackMage.Instance != null) BlackMage.Instance.OnRoundPassed();
+            if (BlackMage.Instance != null)  BlackMage.Instance.OnRoundPassed();
         }
 
-        // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
-        ChangeState(GameState.PlayerUnitSelect);
+        StartCoroutine(DelayThenChangeState(GameState.PlayerUnitSelect));
     }
 
     // ─── PlayerTurnEnd ───────────────────────────────────────
@@ -182,7 +175,13 @@ public class TurnManager : MonoBehaviour
         foreach (Unit unit in FindObjectsOfType<Unit>())
             if (unit.team == "Enemy") unit.UpdateTurnState();
 
-        // LLM 파이프라인 시작 (GeminiAPIManager가 없으면 Fallback)
+        StartCoroutine(DelayThenStartEnemyAction());
+    }
+
+    private IEnumerator DelayThenStartEnemyAction()
+    {
+        yield return new WaitForSeconds(turnStartDelay);
+
         if (GeminiAPIManager.Instance != null &&
             GameStateSerializer.Instance != null &&
             LLMActionParser.Instance != null &&
@@ -195,6 +194,12 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("[TurnManager] LLM 컴포넌트 누락 → Fallback AI 실행");
             ChangeState(GameState.LLMFallback);
         }
+    }
+
+    private IEnumerator DelayThenChangeState(GameState nextState)
+    {
+        yield return new WaitForSeconds(turnStartDelay);
+        ChangeState(nextState);
     }
 
     // ─── LLM 파이프라인 ─────────────────────────────────────────────────
