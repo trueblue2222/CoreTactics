@@ -1157,6 +1157,32 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!1 &189280116 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3545262662943413501, guid: 43875b3ba6addf24cba8306c201f2fec, type: 3}
+  m_PrefabInstance: {fileID: 336188438}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &189280122
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 189280116}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b2fc73623a6898240a0e974551e0ad0a, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &215653857
 GameObject:
   m_ObjectHideFlags: 0
@@ -1695,7 +1721,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3545262662943413501, guid: 43875b3ba6addf24cba8306c201f2fec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 189280122}
   m_SourcePrefab: {fileID: 100100000, guid: 43875b3ba6addf24cba8306c201f2fec, type: 3}
 --- !u!1 &353606120
 GameObject:
@@ -3056,6 +3085,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pickFirstAttackDelay: 1
   firstAttackResultDisplayTime: 1.5
+  turnStartDelay: 2.5
 --- !u!4 &613119429
 Transform:
   m_ObjectHideFlags: 0
