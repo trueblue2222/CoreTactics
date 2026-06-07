@@ -31,13 +31,14 @@ public class TurnManager : MonoBehaviour
 
     void Awake()
     {
+        /*
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
-        }
+        }*/
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        // DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -48,6 +49,12 @@ public class TurnManager : MonoBehaviour
     // ─── 외부에서 상태 전환 요청 시 사용 ─────────────────────
     public void ChangeState(GameState newState)
     {
+        if (CurrentState == GameState.Victory || CurrentState == GameState.Defeat)
+        {
+            Debug.Log($"[TurnManager] 이미 게임이 종료되었습니다! 상태 전환({newState})을 취소합니다.");
+            return;
+        }
+        
         Debug.Log($"[TurnManager] {CurrentState} → {newState}");
         CurrentState = newState;
         IsInputBlocked = newState != GameState.PlayerUnitSelect

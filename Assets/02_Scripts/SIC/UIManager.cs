@@ -67,6 +67,7 @@ public class UIManager : MonoBehaviour
     public Button attackButton;
     public Button skillButton;
     public Button cancelButton;
+    public Button skill2Button;
 
     [Header("Default")]
     public Sprite defaultPortraitSprite;
@@ -84,13 +85,14 @@ public class UIManager : MonoBehaviour
 
     void Awake()
     {
+        /*
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
-        }
+        }*/
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        // DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -321,6 +323,7 @@ public class UIManager : MonoBehaviour
         if (moveButton != null) moveButton.interactable = interactable;
         if (attackButton != null) attackButton.interactable = interactable;
         if (skillButton != null) skillButton.interactable = interactable;
+        if (skill2Button != null) skill2Button.interactable = interactable;
         if (cancelButton != null) cancelButton.interactable = interactable;
     }
 
@@ -341,6 +344,10 @@ public class UIManager : MonoBehaviour
 
     public void ShowGameOver(bool isVictory)
     {
+        if (_turnBannerCoroutine != null) StopCoroutine(_turnBannerCoroutine);
+        if (playerTurnObject != null) playerTurnObject.SetActive(false);
+        if (enemyTurnObject != null) enemyTurnObject.SetActive(false);
+        
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);

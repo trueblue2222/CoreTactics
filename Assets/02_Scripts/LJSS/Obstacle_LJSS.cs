@@ -14,9 +14,10 @@ public class Obstacle : MonoBehaviour
     public GameObject bombEffectPrefab; // 터질 때 생성될 이펙트 프리팹
     public int explosionDamage = 30;    // 폭발 데미지
     public int explosionRange = 2;      // 맨해튼 거리 2칸
+    public int maxTurnsUntilExplosion = 8;
 
     private bool isTriggered = false;
-    private int turnsUntilExplosion = 2;
+    private int turnsUntilExplosion = 8;
     private SpriteRenderer spriteRenderer;
 
     void Awake()
@@ -65,12 +66,12 @@ public class Obstacle : MonoBehaviour
         if (obstacleType != ObstacleType.Bomb || isTriggered) return;
 
         isTriggered = true;
-        turnsUntilExplosion = 2;
+        turnsUntilExplosion = maxTurnsUntilExplosion;
         
         // 점화되었다는 것을 시각적으로 보여주기 위해 빨간색으로 변경
-        if (spriteRenderer != null) spriteRenderer.color = Color.red; 
+        UpdateBombColor();
         
-        Debug.Log("💣 폭탄이 점화되었습니다! 2턴 뒤 폭발합니다.");
+        Debug.Log("💣 폭탄이 점화되었습니다!");
     }
 
     private void OnTurnStateChanged(GameState newState)
@@ -85,6 +86,7 @@ public class Obstacle : MonoBehaviour
             }
             else
             {
+                UpdateBombColor();
                 Debug.Log($"💣 폭탄 폭발까지 {turnsUntilExplosion}턴 남았습니다!");
             }
         }
@@ -138,5 +140,19 @@ public class Obstacle : MonoBehaviour
 
         // 폭탄 자신의 오브젝트는 파괴되어 맵에서 사라짐
         Destroy(gameObject);
+    }
+
+    private void UpdateBombColor()
+    {
+        if (spriteRenderer == null) return;
+
+        // 8턴(최대)일 때는 0(하얀색), 1턴일 때는 1(새빨간색)이 되도록 위험도(dangerRatio)를 계산합니다.
+        float dangerRatio = 1f - ((float)(turnsUntilExplosion - 1) / (maxTurnsUntilExplosion - 1));
+        
+        // 값이 0보다 작거나 1보다 커지지 않도록 안전하게 고정합니다.
+        dangerRatio = Mathf.Clamp01(dangerRatio);
+
+        // 하얀색(Color.white)에서 빨간색(Color.red)으로 dangerRatio 비율만큼 섞습니다!
+        spriteRenderer.color = Color.Lerp(Color.white, Color.red, dangerRatio);
     }
 }
