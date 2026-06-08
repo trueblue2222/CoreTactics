@@ -23,7 +23,8 @@ public class UIManager : MonoBehaviour
 
     // ─── 행동 불가 알림 ───────────────────────────────────────
     [Header("행동 불가 알림")]
-    [SerializeField] private TMP_Text turnEndNoticeText;
+    [SerializeField] private GameObject turnEndNoticeImage;
+    [SerializeField] private float noticeFadeDuration = 0.4f;
     [SerializeField] private float noticeDisplayTime = 1.5f;
     private Coroutine _hideNoticeCoroutine;
 
@@ -99,7 +100,7 @@ public class UIManager : MonoBehaviour
     {
         playerTurnObject?.SetActive(false);
         enemyTurnObject?.SetActive(false);
-        turnEndNoticeText?.gameObject.SetActive(false);
+        turnEndNoticeImage?.SetActive(false);
         SetTurnEndButton(false);
 
         TurnManager.Instance.OnFirstAttackDecided += ShowFirstAttackResult;
@@ -155,15 +156,16 @@ public class UIManager : MonoBehaviour
         obj.SetActive(false);
     }
 
-    private IEnumerator FadeCanvasGroup(CanvasGroup cg, float targetAlpha)
+    private IEnumerator FadeCanvasGroup(CanvasGroup cg, float targetAlpha, float duration = -1f)
     {
+        float d          = duration < 0f ? bannerFadeDuration : duration;
         float startAlpha = cg.alpha;
         float elapsed    = 0f;
 
-        while (elapsed < bannerFadeDuration)
+        while (elapsed < d)
         {
             elapsed += Time.deltaTime;
-            cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / bannerFadeDuration);
+            cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / d);
             yield return null;
         }
 
@@ -173,19 +175,29 @@ public class UIManager : MonoBehaviour
     // ─── 행동 불가 알림 표시 ──────────────────────────────────
     public void ShowTurnEndNotice()
     {
-        if (turnEndNoticeText == null) return;
-
-        turnEndNoticeText.text = "Cannot act anymore in this turn!";
-        turnEndNoticeText.gameObject.SetActive(true);
+        if (turnEndNoticeImage == null) return;
 
         if (_hideNoticeCoroutine != null) StopCoroutine(_hideNoticeCoroutine);
-        _hideNoticeCoroutine = StartCoroutine(HideNoticeAfterDelay());
+        _hideNoticeCoroutine = StartCoroutine(NoticeRoutine());
     }
 
-    private IEnumerator HideNoticeAfterDelay()
+    private IEnumerator NoticeRoutine()
     {
+        CanvasGroup cg = turnEndNoticeImage.GetComponent<CanvasGroup>();
+        turnEndNoticeImage.SetActive(true);
+
+        if (cg == null)
+        {
+            yield return new WaitForSeconds(noticeDisplayTime);
+            turnEndNoticeImage.SetActive(false);
+            yield break;
+        }
+
+        cg.alpha = 0f;
+        yield return StartCoroutine(FadeCanvasGroup(cg, 1f, noticeFadeDuration));
         yield return new WaitForSeconds(noticeDisplayTime);
-        turnEndNoticeText?.gameObject.SetActive(false);
+        yield return StartCoroutine(FadeCanvasGroup(cg, 0f, noticeFadeDuration));
+        turnEndNoticeImage.SetActive(false);
     }
 
     // ─── TurnEnd 버튼 클릭 ────────────────────────────────────
@@ -200,12 +212,14 @@ public class UIManager : MonoBehaviour
         if (state == GameState.PlayerTurnStart)
         {
             ShowTurnBanner(true);
-            turnEndNoticeText?.gameObject.SetActive(false);
+            if (_hideNoticeCoroutine != null) StopCoroutine(_hideNoticeCoroutine);
+            turnEndNoticeImage?.SetActive(false);
         }
         else if (state == GameState.EnemyTurnStart)
         {
             ShowTurnBanner(false);
-            turnEndNoticeText?.gameObject.SetActive(false);
+            if (_hideNoticeCoroutine != null) StopCoroutine(_hideNoticeCoroutine);
+            turnEndNoticeImage?.SetActive(false);
         }
 
         bool playerCanAct = state == GameState.PlayerUnitSelect
