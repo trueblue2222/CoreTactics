@@ -161,7 +161,6 @@ public class Warrior : Unit
                 }
             }
 
-            // 🛑 바리케이드가 막고 있다면? 즉시 for문을 탈출(break)하여 뒤쪽 경로의 적을 보호합니다!
             if (hitBarricade)
             {
                 Debug.Log("경로 상에 바리케이드가 있어 그 너머로는 데미지가 들어가지 않습니다!");
