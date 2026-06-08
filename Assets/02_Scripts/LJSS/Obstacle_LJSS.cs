@@ -14,10 +14,10 @@ public class Obstacle : MonoBehaviour
     public GameObject bombEffectPrefab; // 터질 때 생성될 이펙트 프리팹
     public int explosionDamage = 30;    // 폭발 데미지
     public int explosionRange = 2;      // 맨해튼 거리 2칸
-    public int maxTurnsUntilExplosion = 8;
+    public int maxTurnsUntilExplosion = 2;
 
     private bool isTriggered = false;
-    private int turnsUntilExplosion = 8;
+    private int turnsUntilExplosion = 2;
     private SpriteRenderer spriteRenderer;
 
     void Awake()
@@ -76,8 +76,8 @@ public class Obstacle : MonoBehaviour
 
     private void OnTurnStateChanged(GameState newState)
     {
-        // 플레이어의 턴이 돌아올 때마다 카운트다운을 1씩 깎습니다.
-        if (newState == GameState.PlayerUnitSelect && isTriggered)
+        // 💡 해결: 아군 턴이 시작될 때 (큰 흐름에서 딱 한 번만) 카운트가 깎이도록 변경!
+        if (newState == GameState.PlayerTurnStart && isTriggered)
         {
             turnsUntilExplosion--;
             if (turnsUntilExplosion <= 0)
