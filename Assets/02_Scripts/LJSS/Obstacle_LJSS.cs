@@ -4,19 +4,50 @@ using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
-    public enum ObstacleType { Barricade, Spike}
+    public enum ObstacleType { Barricade, Spike, Bomb}
 
     [Header("Obstacle Settings")]
     public ObstacleType obstacleType;
     public int trapDamage = 10;
 
+    [Header("Bomb Settings")]
+    public GameObject bombEffectPrefab; // 터질 때 생성될 이펙트 프리팹
+    public int explosionDamage = 30;    // 폭발 데미지
+    public int explosionRange = 2;      // 맨해튼 거리 2칸
+    public int maxTurnsUntilExplosion = 2;
+
+    private bool isTriggered = false;
+    private int turnsUntilExplosion = 2;
+    private SpriteRenderer spriteRenderer;
+
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    void Start()
+    {
+        // 폭탄일 경우, 턴이 넘어가는 것을 감지하기 위해 TurnManager를 구독합니다.
+        if (obstacleType == ObstacleType.Bomb && TurnManager.Instance != null)
+        {
+            TurnManager.Instance.OnStateChanged += OnTurnStateChanged;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (obstacleType == ObstacleType.Bomb && TurnManager.Instance != null)
+        {
+            TurnManager.Instance.OnStateChanged -= OnTurnStateChanged;
+        }
+    }
+
     public bool IsPassable()
     {
-        if (obstacleType == ObstacleType.Barricade)
+       if (obstacleType == ObstacleType.Barricade || obstacleType == ObstacleType.Bomb)
         {
             return false;
         }
-        
         return true;
     }
 
@@ -27,5 +58,101 @@ public class Obstacle : MonoBehaviour
             unit.currentHp -= trapDamage;
             Debug.Log($"가시 함정 : {unit.unitClass}의 Hp가 {trapDamage}만큼 감소");
         }
+    }
+
+    public void TriggerBomb()
+    {
+        // 폭탄이 아니거나 이미 불이 붙은 상태면 무시
+        if (obstacleType != ObstacleType.Bomb || isTriggered) return;
+
+        isTriggered = true;
+        turnsUntilExplosion = maxTurnsUntilExplosion;
+        
+        // 점화되었다는 것을 시각적으로 보여주기 위해 빨간색으로 변경
+        UpdateBombColor();
+        
+        Debug.Log("💣 폭탄이 점화되었습니다!");
+    }
+
+    private void OnTurnStateChanged(GameState newState)
+    {
+        // 💡 해결: 아군 턴이 시작될 때 (큰 흐름에서 딱 한 번만) 카운트가 깎이도록 변경!
+        if (newState == GameState.PlayerTurnStart && isTriggered)
+        {
+            turnsUntilExplosion--;
+            if (turnsUntilExplosion <= 0)
+            {
+                Explode(); // 0이 되면 펑!
+            }
+            else
+            {
+                UpdateBombColor();
+                Debug.Log($"💣 폭탄 폭발까지 {turnsUntilExplosion}턴 남았습니다!");
+            }
+        }
+    }
+
+    private void Explode()
+    {
+        Debug.Log("💥 폭탄 폭발!");
+
+        Vector3Int centerCell = BattleManager.Instance.gridTilemap.WorldToCell(transform.position);
+
+        // 맨해튼 거리(x 절대값 + y 절대값)가 2칸 이하인 모든 타일 스캔
+        for (int x = -explosionRange; x <= explosionRange; x++)
+        {
+            for (int y = -explosionRange; y <= explosionRange; y++)
+            {
+                if (Mathf.Abs(x) + Mathf.Abs(y) <= explosionRange)
+                {
+                    Vector3Int targetCell = centerCell + new Vector3Int(x, y, 0);
+                    Vector3 targetWorldPos = BattleManager.Instance.gridTilemap.GetCellCenterWorld(targetCell);
+                    targetWorldPos.z = 0;
+
+                    // 1. 해당 칸에 이펙트 생성
+                    if (bombEffectPrefab != null)
+                    {
+                        GameObject effect = Instantiate(bombEffectPrefab, targetWorldPos, Quaternion.identity);
+
+                        Destroy(effect, 1f);
+                    }
+
+                    // 2. 해당 칸에 있는 유닛/코어 타격
+                    Collider2D[] hits = Physics2D.OverlapPointAll(targetWorldPos);
+                    foreach (Collider2D hit in hits)
+                    {
+                        Unit unit = hit.GetComponent<Unit>();
+                        if (unit != null) unit.TakeDamage(explosionDamage);
+
+                        Core core = hit.GetComponent<Core>();
+                        if (core != null) core.TakeDamage(explosionDamage);
+
+                        // 💡 [연쇄 폭발] 폭발 범위 안에 '다른 폭탄'이 있다면 같이 점화시킵니다!
+                        Obstacle obs = hit.GetComponent<Obstacle>();
+                        if (obs != null && obs != this && obs.obstacleType == ObstacleType.Bomb)
+                        {
+                            obs.TriggerBomb();
+                        }
+                    }
+                }
+            }
+        }
+
+        // 폭탄 자신의 오브젝트는 파괴되어 맵에서 사라짐
+        Destroy(gameObject);
+    }
+
+    private void UpdateBombColor()
+    {
+        if (spriteRenderer == null) return;
+
+        // 8턴(최대)일 때는 0(하얀색), 1턴일 때는 1(새빨간색)이 되도록 위험도(dangerRatio)를 계산합니다.
+        float dangerRatio = 1f - ((float)(turnsUntilExplosion - 1) / (maxTurnsUntilExplosion - 1));
+        
+        // 값이 0보다 작거나 1보다 커지지 않도록 안전하게 고정합니다.
+        dangerRatio = Mathf.Clamp01(dangerRatio);
+
+        // 하얀색(Color.white)에서 빨간색(Color.red)으로 dangerRatio 비율만큼 섞습니다!
+        spriteRenderer.color = Color.Lerp(Color.white, Color.red, dangerRatio);
     }
 }

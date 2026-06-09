@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -23,17 +24,21 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private float pickFirstAttackDelay = 1f;
     [SerializeField] private float firstAttackResultDisplayTime = 1.5f;
 
+    // ─── 턴 시작 배너 대기 시간 (UIManager의 fadeDuration×2 + displayTime과 맞출 것) ──
+    [SerializeField] private float turnStartDelay = 2.5f;
+
     // ─────────────────────────────────────────────────────────
 
     void Awake()
     {
+        /*
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
-        }
+        }*/
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        // DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -44,6 +49,12 @@ public class TurnManager : MonoBehaviour
     // ─── 외부에서 상태 전환 요청 시 사용 ─────────────────────
     public void ChangeState(GameState newState)
     {
+        if (CurrentState == GameState.Victory || CurrentState == GameState.Defeat)
+        {
+            Debug.Log($"[TurnManager] 이미 게임이 종료되었습니다! 상태 전환({newState})을 취소합니다.");
+            return;
+        }
+        
         Debug.Log($"[TurnManager] {CurrentState} → {newState}");
         CurrentState = newState;
         IsInputBlocked = newState != GameState.PlayerUnitSelect
@@ -63,6 +74,8 @@ public class TurnManager : MonoBehaviour
             case GameState.EnemyTurnStart:      OnEnemyTurnStart(); break;
             case GameState.LLMBuildingGameData: StartCoroutine(LLMPipelineRoutine()); break;
             case GameState.LLMFallback:         EnemyAIManager.Instance.ExecuteFallbackAI(); break;
+            case GameState.Victory:             onGameOver(true); break;
+            case GameState.Defeat:              onGameOver(false); break;
         }
     }
 
@@ -109,31 +122,48 @@ public class TurnManager : MonoBehaviour
     }
 
     // ─── PlayerTurnStart ─────────────────────────────────────
-    private void OnPlayerTurnStart() // 0523 LJSS 수정 : 턴 시작 시 맵에 존재하는 모든 Unit script의 UpdateTurnState() 호출하여 턴 상태 업데이트
+    private void OnPlayerTurnStart()
     {
         TurnCount++;
         IsPlayerTurn = true;
         Debug.Log($"[TurnManager] 플레이어 턴 시작 (턴 {TurnCount})");
 
-        Unit[] allUnits = FindObjectsOfType<Unit>(); // 맵에 존재하는 모든 Unit script 참조
+        foreach (Unit unit in FindObjectsOfType<Unit>())
+            if (unit.team == "Player") unit.UpdateTurnState();
 
-        foreach (Unit unit in allUnits) // 모든 유닛의 턴 상태 업데이트
+        if (TurnCount > 1)
         {
-            if (unit.team == "Player")
-            {
-                unit.UpdateTurnState();
-            }
+            if (GiantSlime.Instance != null) GiantSlime.Instance.OnRoundPassed();
+            if (BlackMage.Instance != null)  BlackMage.Instance.OnRoundPassed();
         }
 
-        // UI 갱신·AP 초기화 등 턴 시작 처리가 추가될 경우 여기서 수행
-        ChangeState(GameState.PlayerUnitSelect);
+        StartCoroutine(DelayThenChangeState(GameState.PlayerUnitSelect));
     }
 
     // ─── PlayerTurnEnd ───────────────────────────────────────
     private void OnPlayerTurnEnd()
     {
-        Debug.Log($"[TurnManager] 플레이어 턴 종료 (턴 {TurnCount}) — TurnEnd 버튼 대기 중");
-        // EnemyTurnStart 전환은 UIManager의 TurnEnd 버튼이 담당
+        // 방금 행동한 유닛 마킹
+        Unit actedUnit = BattleManager.Instance.activeUnit;
+        if (actedUnit != null && !actedUnit.hasActedThisTurn)
+        {
+            actedUnit.hasActedThisTurn = true;
+            actedUnit.SetActedVisual(true);
+        }
+
+        // 아직 행동하지 않은 플레이어 유닛이 있으면 선택 단계로 복귀
+        foreach (Unit unit in FindObjectsOfType<Unit>())
+        {
+            if (unit.team == "Player" && unit.gameObject.activeInHierarchy
+                && unit.currentHp > 0 && !unit.hasActedThisTurn)
+            {
+                Debug.Log($"[TurnManager] 미행동 유닛 존재 — 다음 유닛 선택");
+                ChangeState(GameState.PlayerUnitSelect);
+                return;
+            }
+        }
+
+        Debug.Log($"[TurnManager] 모든 플레이어 유닛 행동 완료 (턴 {TurnCount}) — 턴 종료 대기");
     }
 
     // ─── TurnEnd 버튼 클릭 시 호출 (UIManager에서 연결) ─────────────────
@@ -172,7 +202,13 @@ public class TurnManager : MonoBehaviour
         foreach (Unit unit in FindObjectsOfType<Unit>())
             if (unit.team == "Enemy") unit.UpdateTurnState();
 
-        // LLM 파이프라인 시작 (GeminiAPIManager가 없으면 Fallback)
+        StartCoroutine(DelayThenStartEnemyAction());
+    }
+
+    private IEnumerator DelayThenStartEnemyAction()
+    {
+        yield return new WaitForSeconds(turnStartDelay);
+
         if (GeminiAPIManager.Instance != null &&
             GameStateSerializer.Instance != null &&
             LLMActionParser.Instance != null &&
@@ -185,6 +221,12 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("[TurnManager] LLM 컴포넌트 누락 → Fallback AI 실행");
             ChangeState(GameState.LLMFallback);
         }
+    }
+
+    private IEnumerator DelayThenChangeState(GameState nextState)
+    {
+        yield return new WaitForSeconds(turnStartDelay);
+        ChangeState(nextState);
     }
 
     // ─── LLM 파이프라인 ─────────────────────────────────────────────────
@@ -223,9 +265,9 @@ public class TurnManager : MonoBehaviour
 
         // 4단계: 파싱 및 검증
         ChangeState(GameState.LLMValidating);
-        EnemyActionData action = LLMActionParser.Instance.ParseAndValidate(rawResponse);
+        List<EnemyActionData> actions = LLMActionParser.Instance.ParseAndValidate(rawResponse);
 
-        if (action == null)
+        if (actions == null || actions.Count == 0)
         {
             Debug.LogWarning("[TurnManager] LLM 응답 검증 실패 → Fallback AI 전환");
             LLMLogger.Instance.LogResult(rawResponse, null, "파싱·검증 실패");
@@ -233,11 +275,11 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
-        LLMLogger.Instance.LogResult(rawResponse, action);
+        LLMLogger.Instance.LogResult(rawResponse, actions[0]);
 
         // 5단계: 행동 실행
         ChangeState(GameState.EnemyActionExecute);
-        yield return StartCoroutine(LLMActionExecutor.Instance.ExecuteAction(action));
+        yield return StartCoroutine(LLMActionExecutor.Instance.ExecuteActions(actions));
 
         // 6단계: 플레이어 턴으로 전환
         ChangeState(GameState.PlayerTurnStart);
@@ -248,5 +290,44 @@ public class TurnManager : MonoBehaviour
         Debug.Log("적 AI 미구현 : 1초 대기 후플레이어 턴으로 넘어가기");
         yield return new WaitForSeconds(1.0f);
         ChangeState(GameState.PlayerTurnStart);
+    }
+
+    // blackMage 접근 위해 설정
+    public void SetInputBlocked(bool isBlocked)
+    {
+        IsInputBlocked = isBlocked;
+    }
+
+    // GameOver Case1 : Core break
+
+    private void onGameOver(bool isVictory)
+    {
+        UIManager.Instance.ShowGameOver(isVictory);
+    }
+
+    // GameOver Case2 : 유닛 사망
+
+    public void CheckUnitDeathWinCondition()
+    {
+        if (CurrentState == GameState.Victory || CurrentState == GameState.Defeat) return;
+
+        Unit[] allUnits = FindObjectsOfType<Unit>(true); // 비활성화된 유닛 포함 모든 유닛 찾기
+        
+        bool isPlayerAlive = false;
+        bool isEnemyAlive = false;
+
+        foreach (Unit unit in allUnits)
+        {
+            // hierarchy 상에서 활성화되어 있고 체력이 0보다 크다면 살아있는 것
+            if (unit.gameObject.activeInHierarchy && unit.currentHp > 0)
+            {
+                if (unit.team == "Player") isPlayerAlive = true;
+                if (unit.team == "Enemy") isEnemyAlive = true;
+            }
+        }
+
+        // 💡 조건 판정
+        if (!isPlayerAlive) ChangeState(GameState.Defeat); // 아군 전멸 -> 패배
+        else if (!isEnemyAlive) ChangeState(GameState.Victory); // 적군 전멸 -> 승리
     }
 }

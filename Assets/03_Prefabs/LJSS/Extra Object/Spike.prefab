@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   obstacleType: 1
-  trapDamage: 2
+  trapDamage: 20
 --- !u!61 &1970628859782624224
 BoxCollider2D:
   m_ObjectHideFlags: 0

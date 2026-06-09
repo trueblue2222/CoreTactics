@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1413395475257865022}
   - component: {fileID: 6941666437476276683}
   - component: {fileID: 4850791610674416935}
+  - component: {fileID: 1480748944600202233}
   m_Layer: 0
   m_Name: Player_Warrior
   m_TagString: Untagged
@@ -76,7 +77,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 21300000, guid: 6fcd4bcfc111603439a70815c36322fb, type: 3}
+  m_Sprite: {fileID: -528687930, guid: ba377e20d3e83814c93e5f512a197355, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,7 +124,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.76, y: 1.76}
+    oldSize: {x: 1.2727273, y: 1.2545455}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -155,10 +156,36 @@ MonoBehaviour:
   skillCooldown: 0
   isSniperMode: 0
   sniperModeTurnsLeft: 0
+  rootedTurns: 0
+  buffEffectObj: {fileID: 0}
   moveSpeed: 2
   hitFlashDuration: 0.3
   activeHighlight: {fileID: 1422995426597680184}
   inspectedHighlight: {fileID: 0}
+  dashSpeed: 10
+  swordEruptionPrefab: {fileID: 9040280516517953764, guid: 59bc6ad8afd77a74a9ec7570a67ce245, type: 3}
+  aoeDamage: 30
+--- !u!95 &1480748944600202233
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3524541419157154429}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8e88085d7fdff394d81b5de6aebc29a8, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &2083056837153642701
 PrefabInstance:
   m_ObjectHideFlags: 0

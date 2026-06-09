@@ -31,6 +31,7 @@ public class BattleManager : MonoBehaviour
     public Unit activeUnit;
     public Unit inspectedUnit;
     public Unit skillTargetUnit;
+    public Obstacle skillTargetObstacle;
 
     [Header("Movement Highlights")]
     public GameObject moveHighlightPrefab;
@@ -76,25 +77,33 @@ public class BattleManager : MonoBehaviour
     {
         if (newState == GameState.PlayerTurnEnd)
         {
-            // 행동 완료 → 버튼 비활성화
             UIManager.Instance.HideActionButtons();
+        }
 
+        // 유닛 행동 완료 후 다음 유닛 선택 상태로 복귀할 때 정리
+        if (newState == GameState.PlayerUnitSelect)
+        {
+            ClearHighlights();
+            if (activeUnit != null) activeUnit.ClearHighlights();
+            activeUnit = null;
+            currentState = BattleState.Idle;
+            UIManager.Instance.ClearActiveUnitUI();
+            UIManager.Instance.HideActionButtons();
         }
 
         if (newState == GameState.EnemyTurnStart)
         {
-            Debug.Log("[BattleManager] 적 턴 시작시 플레이어 행동 및 하이라이트 및 선택 상태 초기화");
+            Debug.Log("[BattleManager] 적 턴 시작 — 선택 상태 초기화");
 
             ClearHighlights();
             if (activeUnit != null) activeUnit.ClearHighlights();
             if (inspectedUnit != null) inspectedUnit.ClearHighlights();
 
             currentState = BattleState.Idle;
-
             activeUnit = null;
             inspectedUnit = null;
             skillTargetUnit = null;
-
+            skillTargetObstacle = null;
             UIManager.Instance.ClearActiveUnitUI();
             UIManager.Instance.ClearInspectedUnitUI();
         }
@@ -106,6 +115,8 @@ public class BattleManager : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
         Unit clickedUnit = hit.collider != null ? hit.collider.GetComponent<Unit>() : null;
         Core clickedCore = hit.collider != null ? hit.collider.GetComponent<Core>() : null;
+
+        Obstacle clickedObstacle = hit.collider != null ? hit.collider.GetComponent<Obstacle>() : null;
 
         Vector3Int cellPos = gridTilemap.WorldToCell(mousePos);
 
@@ -129,7 +140,7 @@ public class BattleManager : MonoBehaviour
                 bool isSelectPhase = gs == GameState.PlayerUnitSelect
                                   || gs == GameState.PlayerActionSelect;
 
-                if (isSelectPhase)
+                if (isSelectPhase && !clickedUnit.hasActedThisTurn)
                 {
                     if (activeUnit != null && activeUnit != clickedUnit)
                         activeUnit.SetActiveHighlight(false);
@@ -177,6 +188,8 @@ public class BattleManager : MonoBehaviour
                         {
                             TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                             Debug.Log($"{activeUnit.unitClass}가 {clickedUnit.unitClass}를 공격");
+
+                            activeUnit.TriggerAttackAnim();
                             clickedUnit.TakeDamage(activeUnit.atk);
 
                             ClearHighlights();
@@ -187,7 +200,24 @@ public class BattleManager : MonoBehaviour
                         {
                             TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
                             Debug.Log($"[핵 공격] {activeUnit.unitClass}가 상대방 핵을 공격");
+
+                            activeUnit.TriggerAttackAnim();
+                            
                             clickedCore.TakeDamage(activeUnit.atk);
+
+                            ClearHighlights();
+                            currentState = BattleState.Idle;
+                            TurnManager.Instance.ChangeState(GameState.PlayerTurnEnd);
+                        }
+                        else if (clickedObstacle != null && clickedObstacle.obstacleType == Obstacle.ObstacleType.Bomb)
+                        {
+                            TurnManager.Instance.ChangeState(GameState.PlayerActionExecute);
+                            Debug.Log($"{activeUnit.unitClass}가 폭탄을 타격하여 기폭시켰습니다!");
+
+                            activeUnit.TriggerAttackAnim();
+                            
+                            // 폭탄 점화 함수 실행
+                            clickedObstacle.TriggerBomb(); 
 
                             ClearHighlights();
                             currentState = BattleState.Idle;
@@ -232,6 +262,12 @@ public class BattleManager : MonoBehaviour
         if (activeUnit.isSniperMode)
         {
             Debug.Log("저격 모드 중에는 이동할 수 없습니다");
+            return;
+        }
+
+        if (activeUnit.rootedTurns > 0)
+        {
+            Debug.Log("점액으로 인해 움직일 수 없습니다.");
             return;
         }
         Debug.Log("이동할 타일을 클릭하세요");
@@ -285,9 +321,28 @@ public class BattleManager : MonoBehaviour
         activeUnit.OnSkillButtonPressed();
     }
 
+    public void OnSecondSkillButtonClicked()
+    {
+        if (activeUnit == null) return;
+        if (activeUnit.skillCooldown > 0)
+        {
+            Debug.Log($"{activeUnit.unitClass} 2차 스킬 쿨타임 대기중 ({activeUnit.skillCooldown}턴 남음)");
+            return;
+        }
+
+        activeUnit.OnSecondSkillButtonPressed();
+    }
+
     void ShowMovableTiles(Unit unit)
     {
         ClearHighlights();
+
+        if (activeUnit != null && activeUnit.rootedTurns > 0)
+        {
+            Debug.Log("점액 때문에 발이 묶여 이번 턴에는 이동할 수 없습니다!");
+            // 필요하다면 화면에 "이동 불가!" 같은 UI 경고문을 띄워주면 좋습니다.
+            return; 
+        }
 
         Vector3Int startCell = gridTilemap.WorldToCell(unit.transform.position);
         int range = unit.moveRange;
@@ -368,6 +423,7 @@ public class BattleManager : MonoBehaviour
         ClearHighlights();
         currentState = BattleState.Idle;
         skillTargetUnit = null;
+        skillTargetObstacle = null;
 
         TurnManager.Instance.ChangeState(GameState.PlayerActionSelect);
     }

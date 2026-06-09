@@ -1,0 +1,623 @@
+fileFormatVersion: 2
+guid: 27578a3fdba6288438f40a21875142ba
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: iPhone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: archer_animation6_3
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 849
+        width: 127
+        height: 123
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f0a7b4c15d461f447a3d0b0d0ed7137c
+      internalID: -381014139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_4
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 849
+        width: 123
+        height: 123
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17bb6265bd4f6b54281fa7a8130f1b3d
+      internalID: 1597697805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_5
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 849
+        width: 123
+        height: 123
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5c5aba992c5c07746affe4d4e0099cec
+      internalID: -177947197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_6
+      rect:
+        serializedVersion: 2
+        x: 575
+        y: 849
+        width: 119
+        height: 124
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64530357d32be5147a01c93670fe6c1b
+      internalID: 331087223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_9
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 660
+        width: 113
+        height: 114
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 48a5caa0b9e6246438dcf2be9250ba11
+      internalID: -2146041655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_10
+      rect:
+        serializedVersion: 2
+        x: 206
+        y: 660
+        width: 111
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0387ab23a96f4aa4db37d77d46e853fa
+      internalID: 1857978935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_11
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 660
+        width: 116
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 078f1eb2b9884644492383fb9c958cde
+      internalID: -545818186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_12
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 660
+        width: 111
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c470a7ec3cf89a74b9044efdff44649a
+      internalID: 1109196055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_23
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 433
+        width: 143
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19fb25f04c8d38642a8caceaea74de15
+      internalID: 1941077781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_31
+      rect:
+        serializedVersion: 2
+        x: 354
+        y: 433
+        width: 139
+        height: 121
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a30a181b8d16f2c4cb5acfdaa1449a08
+      internalID: 972842268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_32
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 432
+        width: 138
+        height: 120
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acfada858f992a44e8b320913f4644a6
+      internalID: 1360067647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_33
+      rect:
+        serializedVersion: 2
+        x: 741
+        y: 519
+        width: 5
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf6b9cfddd41a744a8d5f36d60d42f3d
+      internalID: -1457801930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_43
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 216
+        width: 138
+        height: 117
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34eeb2fd4d9b7ce438f98d28a97c03d3
+      internalID: 299750942
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_45
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 215
+        width: 143
+        height: 118
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc9a631a5884c924ea1493f0eeb8ec85
+      internalID: -582480575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_47
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 214
+        width: 148
+        height: 121
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d97ea5f9031e0c418253eaa831ff1e1
+      internalID: 1923491788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_55
+      rect:
+        serializedVersion: 2
+        x: 694
+        y: 245
+        width: 192
+        height: 67
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98eefab216844a046b2cb1d83de66d06
+      internalID: -1388896807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_56
+      rect:
+        serializedVersion: 2
+        x: 701
+        y: 286
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8845b772dd81b634eb412f42904a3194
+      internalID: 52620746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_57
+      rect:
+        serializedVersion: 2
+        x: 915
+        y: 216
+        width: 146
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0155ef0de4faed145aa80e3574bd86da
+      internalID: 980298368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_61
+      rect:
+        serializedVersion: 2
+        x: 695
+        y: 274
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8a96f1ed8bd1523428a7e0f376da157f
+      internalID: 598623789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: archer_animation6_0
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 424
+        width: 132
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ec9769bea46acf45b69ebc6b0f9f8dc
+      internalID: 881156460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      archer_animation6_0: 881156460
+      archer_animation6_1: 563830156
+      archer_animation6_10: 1857978935
+      archer_animation6_11: -545818186
+      archer_animation6_12: 1109196055
+      archer_animation6_13: -427642842
+      archer_animation6_14: 1956626828
+      archer_animation6_15: -629791077
+      archer_animation6_16: -837131382
+      archer_animation6_17: -1803148807
+      archer_animation6_18: 599266757
+      archer_animation6_19: 599085753
+      archer_animation6_2: 1426731509
+      archer_animation6_20: -147964533
+      archer_animation6_21: 904779162
+      archer_animation6_22: -398033212
+      archer_animation6_23: 1941077781
+      archer_animation6_24: 521234693
+      archer_animation6_25: 1681110679
+      archer_animation6_26: -1551264977
+      archer_animation6_27: -1813985769
+      archer_animation6_28: 1222266158
+      archer_animation6_29: -1804738956
+      archer_animation6_3: -381014139
+      archer_animation6_30: 1846913019
+      archer_animation6_31: 972842268
+      archer_animation6_32: 1360067647
+      archer_animation6_33: -1457801930
+      archer_animation6_34: 645054237
+      archer_animation6_35: -333324812
+      archer_animation6_36: -292483485
+      archer_animation6_37: 1097553761
+      archer_animation6_38: 2107993611
+      archer_animation6_39: 845081635
+      archer_animation6_4: 1597697805
+      archer_animation6_40: -732181098
+      archer_animation6_41: 1809912553
+      archer_animation6_42: -328101648
+      archer_animation6_43: 299750942
+      archer_animation6_44: -1639765063
+      archer_animation6_45: -582480575
+      archer_animation6_46: -1124920068
+      archer_animation6_47: 1923491788
+      archer_animation6_48: 207269699
+      archer_animation6_49: -2077009544
+      archer_animation6_5: -177947197
+      archer_animation6_50: 680200527
+      archer_animation6_51: 1792231873
+      archer_animation6_52: -1578550840
+      archer_animation6_53: -662076593
+      archer_animation6_54: -667383557
+      archer_animation6_55: -1388896807
+      archer_animation6_56: 52620746
+      archer_animation6_57: 980298368
+      archer_animation6_58: 1864652424
+      archer_animation6_59: 329197574
+      archer_animation6_6: 331087223
+      archer_animation6_60: -1043486006
+      archer_animation6_61: 598623789
+      archer_animation6_62: 1328661856
+      archer_animation6_7: 1450008718
+      archer_animation6_8: -380559210
+      archer_animation6_9: -2146041655
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

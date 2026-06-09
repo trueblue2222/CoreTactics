@@ -55,6 +55,17 @@ public class GameStateSerializer : MonoBehaviour
     // ─── 게임 상태 직렬화 ────────────────────────────────────────────────
     public string SerializeCurrentGameState()
     {
+        // 플레이어 코어 위치를 먼저 확인 — 적 유닛 distanceToPlayerCore 계산에 사용
+        CellPos playerCorePos = null;
+        foreach (var pair in idToCore)
+        {
+            if (pair.Value != null && pair.Value.team == "Player")
+            {
+                playerCorePos = ToCell(pair.Value.transform.position);
+                break;
+            }
+        }
+
         var snapshot = new GameStateSnapshot
         {
             turn = TurnManager.Instance.TurnCount,
@@ -68,7 +79,7 @@ public class GameStateSerializer : MonoBehaviour
             Unit unit = pair.Key;
             if (unit == null || !unit.gameObject.activeInHierarchy || unit.currentHp <= 0) continue;
 
-            UnitSnapshot us = BuildUnitSnapshot(unit, pair.Value);
+            UnitSnapshot us = BuildUnitSnapshot(unit, pair.Value, playerCorePos);
             if (unit.team == "Player") snapshot.playerUnits.Add(us);
             else snapshot.enemyUnits.Add(us);
         }
@@ -92,17 +103,26 @@ public class GameStateSerializer : MonoBehaviour
         foreach (Obstacle obs in FindObjectsOfType<Obstacle>())
         {
             if (!obs.gameObject.activeInHierarchy) continue;
+            string obsType = obs.obstacleType switch
+            {
+                Obstacle.ObstacleType.Barricade => "Barricade",
+                Obstacle.ObstacleType.Spike     => "Spike",
+                Obstacle.ObstacleType.Bomb      => "Bomb",
+                _                               => "Unknown"
+            };
             snapshot.obstacles.Add(new ObstacleSnapshot
             {
                 position = ToCell(obs.transform.position),
-                type = obs.IsPassable() ? "Spike" : "Barricade"
+                type     = obsType
             });
         }
+
+        snapshot.bigObject = BuildBigObjectSnapshot();
 
         return JsonUtility.ToJson(snapshot);
     }
 
-    private UnitSnapshot BuildUnitSnapshot(Unit unit, string id)
+    private UnitSnapshot BuildUnitSnapshot(Unit unit, string id, CellPos playerCorePos)
     {
         Vector3Int cell = BattleManager.Instance.gridTilemap.WorldToCell(unit.transform.position);
         var us = new UnitSnapshot
@@ -114,17 +134,22 @@ public class GameStateSerializer : MonoBehaviour
             currentHp = unit.currentHp,
             maxHp = unit.maxHp,
             atk = unit.atk,
-            def = unit.def,
             moveRange = unit.moveRange,
             attackRange = unit.attackRange,
             skillCooldown = unit.skillCooldown,
-            isSniperMode = unit.isSniperMode
+            isSniperMode = unit.isSniperMode,
+            isRooted = unit.rootedTurns > 0
         };
 
         if (unit.team == "Enemy")
         {
             us.reachableCells = ComputeReachableCells(unit, cell);
             us.attackableTargetIds = ComputeAttackableTargetIds(cell, unit.attackRange);
+            if (playerCorePos != null)
+            {
+                us.distanceToPlayerCore = Mathf.Abs(cell.x - playerCorePos.x) + Mathf.Abs(cell.y - playerCorePos.y);
+                us.bestMoveTarget = ComputeBestMoveTarget(us.reachableCells, playerCorePos, new CellPos(cell.x, cell.y));
+            }
         }
 
         return us;
@@ -163,6 +188,26 @@ public class GameStateSerializer : MonoBehaviour
             }
         }
         return result;
+    }
+
+    // reachableCells 중 playerCore에 맨해튼 거리가 가장 가까운 셀을 반환합니다.
+    // 현재 위치보다 멀어지는 경우에도 후퇴를 방지하기 위해 현재 위치도 후보에 포함하지 않습니다.
+    private CellPos ComputeBestMoveTarget(List<CellPos> reachable, CellPos corePos, CellPos currentPos)
+    {
+        CellPos best = currentPos;
+        int bestDist = Mathf.Abs(currentPos.x - corePos.x) + Mathf.Abs(currentPos.y - corePos.y);
+
+        foreach (CellPos c in reachable)
+        {
+            if (c.x == currentPos.x && c.y == currentPos.y) continue;
+            int d = Mathf.Abs(c.x - corePos.x) + Mathf.Abs(c.y - corePos.y);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = c;
+            }
+        }
+        return best;
     }
 
     // 현재 위치에서 공격 사거리 내에 있는 플레이어 유닛/코어의 ID만 반환합니다.
@@ -212,5 +257,48 @@ public class GameStateSerializer : MonoBehaviour
     {
         Vector3Int c = BattleManager.Instance.gridTilemap.WorldToCell(worldPos);
         return new CellPos(c.x, c.y);
+    }
+
+    // ─── BigObject 스냅샷 ─────────────────────────────────────────────────
+    private BigObjectSnapshot BuildBigObjectSnapshot()
+    {
+        if (GiantSlime.Instance != null && GiantSlime.Instance.gameObject.activeInHierarchy)
+        {
+            var snap = new BigObjectSnapshot
+            {
+                type = "GiantSlime",
+                cooldownRemaining = GiantSlime.Instance.CooldownRemaining,
+                slimePuddles = new List<CellPos>()
+            };
+            foreach (SlimePuddle puddle in FindObjectsOfType<SlimePuddle>())
+            {
+                if (puddle.gameObject.activeInHierarchy)
+                    snap.slimePuddles.Add(ToCell(puddle.transform.position));
+            }
+            return snap;
+        }
+
+        if (BlackMage.Instance != null && BlackMage.Instance.gameObject.activeInHierarchy)
+        {
+            var snap = new BigObjectSnapshot
+            {
+                type = "BlackMage",
+                cooldownRemaining = BlackMage.Instance.CooldownRemaining,
+                isWarningPhase = BlackMage.Instance.IsWarningPhase,
+                slimePuddles = new List<CellPos>(),
+                playerTeleportDest = new CellPos(),
+                enemyTeleportDest = new CellPos()
+            };
+            if (BlackMage.Instance.IsWarningPhase)
+            {
+                snap.warnedPlayerUnitId = GetUnitId(BlackMage.Instance.WarnedPlayerUnit);
+                snap.warnedEnemyUnitId  = GetUnitId(BlackMage.Instance.WarnedEnemyUnit);
+                snap.playerTeleportDest = ToCell(BlackMage.Instance.PlayerTeleportDest);
+                snap.enemyTeleportDest  = ToCell(BlackMage.Instance.EnemyTeleportDest);
+            }
+            return snap;
+        }
+
+        return new BigObjectSnapshot { type = "None", slimePuddles = new List<CellPos>(), playerTeleportDest = new CellPos(), enemyTeleportDest = new CellPos() };
     }
 }
