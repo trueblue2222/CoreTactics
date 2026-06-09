@@ -59,6 +59,7 @@ public class UnitSnapshot
     public List<CellPos> reachableCells;          // 적 유닛에만 포함: 이동 가능한 셀 목록
     public List<string> attackableTargetIds;      // 적 유닛에만 포함: 지금 바로 공격 가능한 ID 목록
     public int distanceToPlayerCore;              // 적 유닛에만 포함: 플레이어 코어까지 맨해튼 거리
+    public CellPos bestMoveTarget;                // 적 유닛에만 포함: reachableCells 중 playerCore에 가장 가까운 셀
 }
 
 [Serializable]

@@ -146,7 +146,10 @@ public class GameStateSerializer : MonoBehaviour
             us.reachableCells = ComputeReachableCells(unit, cell);
             us.attackableTargetIds = ComputeAttackableTargetIds(cell, unit.attackRange);
             if (playerCorePos != null)
+            {
                 us.distanceToPlayerCore = Mathf.Abs(cell.x - playerCorePos.x) + Mathf.Abs(cell.y - playerCorePos.y);
+                us.bestMoveTarget = ComputeBestMoveTarget(us.reachableCells, playerCorePos, new CellPos(cell.x, cell.y));
+            }
         }
 
         return us;
@@ -185,6 +188,26 @@ public class GameStateSerializer : MonoBehaviour
             }
         }
         return result;
+    }
+
+    // reachableCells 중 playerCore에 맨해튼 거리가 가장 가까운 셀을 반환합니다.
+    // 현재 위치보다 멀어지는 경우에도 후퇴를 방지하기 위해 현재 위치도 후보에 포함하지 않습니다.
+    private CellPos ComputeBestMoveTarget(List<CellPos> reachable, CellPos corePos, CellPos currentPos)
+    {
+        CellPos best = currentPos;
+        int bestDist = Mathf.Abs(currentPos.x - corePos.x) + Mathf.Abs(currentPos.y - corePos.y);
+
+        foreach (CellPos c in reachable)
+        {
+            if (c.x == currentPos.x && c.y == currentPos.y) continue;
+            int d = Mathf.Abs(c.x - corePos.x) + Mathf.Abs(c.y - corePos.y);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = c;
+            }
+        }
+        return best;
     }
 
     // 현재 위치에서 공격 사거리 내에 있는 플레이어 유닛/코어의 ID만 반환합니다.
