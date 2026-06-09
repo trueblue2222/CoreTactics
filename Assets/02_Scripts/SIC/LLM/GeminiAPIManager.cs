@@ -110,8 +110,9 @@ public class GeminiAPIManager : MonoBehaviour
 
         string userMsg =
             $"Current game state (JSON):\n{gameStateJson}\n\n" +
-            "DESTROY the player Core and all player units. " +
-            "Output ONE aggressive action per enemy unit as a JSON array — no markdown, no explanation.";
+            "YOUR GOAL: Destroy the player Core (id=player_core). Every unit MUST advance toward playerCore every turn.\n" +
+            "For move actions, ALWAYS use the bestMoveTarget field — it is pre-computed as the closest reachable cell to playerCore. Do NOT deviate from it.\n" +
+            "Follow the STRATEGY priority order. Output ONE action per enemy unit as a JSON array — no markdown, no explanation.";
 
         yield return StartCoroutine(PostRequest(userMsg, onSuccess, onFailure, logForSession: true));
     }
@@ -297,15 +298,19 @@ public class GeminiAPIManager : MonoBehaviour
 "=== OUTPUT FORMAT ===\n" +
 "[{\"unitId\":\"enemy_warrior_0\",\"actionType\":\"attack\",\"attackTargetId\":\"player_core\"},...]\n" +
 "No markdown, no explanation.\n\n" +
-"=== STRATEGY ===\n" +
-"FIGHT AGGRESSIVELY — never passive:\n" +
-"1. attackableTargetIds contains player Core → ATTACK it immediately.\n" +
-"2. skillCooldown==0 and skill/skill2 can hit player unit or Core → USE it.\n" +
-"3. MOVE to reachableCells cell that minimizes distanceToPlayerCore.\n" +
-"4. attackableTargetIds non-empty → ATTACK (prefer lowest currentHp target).\n" +
-"5. MOVE toward nearest player unit.\n" +
-"6. Always move — NEVER skip voluntarily.\n" +
-"ALWAYS use skills offensively. Warrior rushes the Core; Archer/Magician support from range.";
+"=== STRATEGY (follow this priority order STRICTLY) ===\n" +
+"Priority 1 — ATTACK CORE: attackableTargetIds contains \"player_core\" → actionType=attack, attackTargetId=\"player_core\".\n" +
+"Priority 2 — USE SKILL ON CORE/UNIT: skillCooldown==0 → use skill or skill2 to deal damage to player core or unit.\n" +
+"Priority 3 — ATTACK UNIT: attackableTargetIds non-empty → actionType=attack, prefer lowest currentHp target.\n" +
+"Priority 4 — MOVE TOWARD CORE: actionType=move, moveTarget=bestMoveTarget (already computed — use this field directly, do NOT compute your own).\n" +
+"             bestMoveTarget is the reachableCells cell closest to playerCore. ALWAYS use it as-is.\n" +
+"             NEVER move to a cell farther from playerCore than your current position.\n" +
+"             NEVER repeat the same position as last turn — always advance.\n" +
+"Priority 5 — skip ONLY if isRooted==true AND attackableTargetIds is empty AND no skill available.\n\n" +
+"WARRIOR must always advance toward playerCore. Use Dash (skill) to close distance fast.\n" +
+"ARCHER attacks from range; uses Arrow Shower on clustered enemies or core.\n" +
+"MAGICIAN supports with Teleport and Lightning; always stays within range of core.\n" +
+"NEVER voluntarily stay still. NEVER move away from playerCore.";
 
     private string BuildBigObjectRules() =>
         GameConfig.SelectedBigObject switch
